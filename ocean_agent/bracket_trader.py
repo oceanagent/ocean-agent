@@ -1411,7 +1411,8 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
                 # the expiry exit. (08-27 decision)
                 sl_lim = _round_to_tick(float(sl_s), tick)
             elif _sl_buf > 0:
-                _slb = float(sl_s) * (1 - _sl_buf * mv) if long_                     else float(sl_s) * (1 + _sl_buf * mv)
+                _slb = (float(sl_s) * (1 - _sl_buf * mv) if long_
+                        else float(sl_s) * (1 + _sl_buf * mv))
                 sl_lim = _round_to_tick(_slb, tick)
             if _entry_limit:
                 # Resting limit at the same anchor the brackets were built
