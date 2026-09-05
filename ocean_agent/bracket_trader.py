@@ -52,12 +52,13 @@ Run:  python -m ocean_agent.bracket_trader [--once] [--dry] [--status]
 """
 import argparse
 import datetime as dt
-import threading
 import glob
 import json
 import os
 import sys
+import threading
 import time
+import traceback
 
 from .api_client import PacificaError
 from .autonomous import load_policy, make_client, log, equity, record_equity
@@ -2310,7 +2311,69 @@ def watch_positions(client, policy, st, cfg, dry: bool) -> None:
                 save_state(st)
                 notify.send(f"브래킷 {why} 청산: {sym} {move:+.2f}%")
             except PacificaError as e:
+                # The resting orders came off the book a few lines above,
+                # so a close that fails here leaves the position with no
+                # exchange stop behind it. The loop's own line check still
+                # covers it while the bot runs, and that used to be the
+                # whole answer. It is not: on 09-05 the process was killed
+                # from outside and stayed down fourteen hours, which is
+                # exactly the stretch where "the bot watches it" means
+                # nothing. Put the stop back before reporting the failure.
+                log(f"⚠️ 청산 실패 {sym}: {str(e)[:100]}. "
+                    f"거래소 손절선을 다시 겁니다")
+                _restore_stop(client, sym, pos)
                 notify.send(f"브래킷 청산 실패 {sym}: {str(e)[:120]}")
+
+
+def _restore_stop(client, sym: str, pos: dict) -> None:
+    """Put this position's stop back on the exchange. Never raises.
+
+    Used where a close path has already cancelled the resting orders and
+    then failed to close. The prices come off the position's own record,
+    not from today's multipliers, so a book holding two geometries gets
+    each one its own line back (the same reason _recorded_distances reads
+    them there).
+
+    Only attaches when the symbol has no orders of ours left, for the
+    reason the entry path gives: orders under unknown field names may BE
+    the bracket, and a blind re-attach would stack a second stop.
+    """
+    sl = pos.get("sl")
+    if not sl:
+        log(f"⚠️ {sym}: 기록에 손절가가 없어 다시 걸지 못했습니다")
+        return
+    try:
+        has_tp, has_sl, sym_orders = _exchange_brackets(client, sym)
+    except PacificaError as e:
+        log(f"⚠️ {sym}: 주문 조회 실패로 손절 재설치 못 함 ({str(e)[:60]})")
+        return
+    if has_sl:
+        return                       # 이미 살아 있다
+    if sym_orders:
+        _log_raw_order_once(sym, sym_orders)
+        log(f"⚠️ {sym}: 알 수 없는 주문이 남아 있어 손절을 겹쳐 걸지 "
+            f"않습니다. 다음 회차가 손절선을 직접 봅니다")
+        return
+    long_ = pos.get("dir") == "long"
+    tick = _tick_of(client, sym)
+    sl_s = _round_to_tick(float(sl), tick)
+    tp_s = ""
+    if not has_tp and pos.get("tp"):
+        tp_s = _round_to_tick(float(pos["tp"]), tick)
+    try:
+        client.set_position_tpsl(
+            sym, "bid" if long_ else "ask",
+            take_profit_price=tp_s,
+            stop_loss_price=sl_s,
+            take_profit_limit=_tp_limit,
+            stop_loss_limit_price=sl_s if _sl_maker else "")
+        log(f"{sym}: 거래소 손절선을 {sl_s} 에 다시 걸었습니다")
+    except PacificaError as e:
+        pos["unprotected"] = True
+        log(f"⚠️ {sym}: 손절 재설치 실패 ({str(e)[:80]}). 무보호 표시. "
+            f"봇이 매 회차 손절선을 직접 봅니다")
+        notify.send(f"⚠️ 브래킷 {sym}: 청산도 손절 재설치도 실패했습니다. "
+                    f"거래소에 보호선이 없습니다. 확인이 필요합니다")
 
 
 _TICKS: dict = {}
@@ -3429,25 +3492,47 @@ def main():
         f"{'DRY RUN' if args.dry else '실주문'}")
     try:
         while True:
-            if not args.dry:
-                write_heartbeat()      # hold the account for this mode
-            maybe_generate_seal()
-            if not args.dry:
-                write_heartbeat()      # generation can take minutes; renew
+            # The guard wraps the whole turn, not just cycle(). Four calls
+            # used to sit outside it - the two heartbeats, the seal, the
+            # status print and the sleep - and a raise in any of them ended
+            # the loop and stopped the bot. Nothing out here is worth
+            # dying for: a failed heartbeat write expires on its own, and a
+            # failed sleep just means the next turn starts sooner.
             try:
-                cycle(client, policy, st, cfg, args.dry)
-            except PacificaError as e:
-                log(f"사이클 오류(다음 사이클에 재시도): {e}")
                 if not args.dry:
-                    save_state(st)     # keep whatever was booked before the error
+                    write_heartbeat()      # hold the account for this mode
+                maybe_generate_seal()
+                if not args.dry:
+                    write_heartbeat()      # generation takes minutes; renew
+                try:
+                    cycle(client, policy, st, cfg, args.dry)
+                except PacificaError as e:
+                    log(f"사이클 오류(다음 사이클에 재시도): {e}")
+                    if not args.dry:
+                        save_state(st)     # keep what was booked before it
+                if args.once:
+                    break
+                print(status(st))
+                sleep_alive(LOOP_MIN * 60, args.dry, st, client, policy)
+            except KeyboardInterrupt:
+                raise                      # Ctrl+C means stop, so stop
             except Exception as e:                 # noqa: BLE001
-                notify.send(f"브래킷 예상 밖 오류: {type(e).__name__}: {str(e)[:150]}")
+                # The name and 150 characters were all this left behind, so
+                # 09-05's silent death had nothing to read. The traceback
+                # goes to the log, where it can be found later; the alert
+                # stays short because it goes to a phone.
+                log(f"⚠️ 예상 밖 오류(다음 회차에 계속): "
+                    f"{type(e).__name__}: {str(e)[:200]}")
+                for _ln in traceback.format_exc().rstrip().split("\n"):
+                    log("    " + _ln)
                 if not args.dry:
-                    save_state(st)
-            if args.once:
-                break
-            print(status(st))
-            sleep_alive(LOOP_MIN * 60, args.dry, st, client, policy)
+                    try:
+                        save_state(st)
+                    except Exception:              # noqa: BLE001
+                        log("    상태 저장도 실패했습니다")
+                notify.send(f"브래킷 예상 밖 오류: {type(e).__name__}: "
+                            f"{str(e)[:150]}")
+                time.sleep(5)              # 같은 오류로 고리를 태우지 않는다
     finally:
         if not args.dry:
             clear_heartbeat()
