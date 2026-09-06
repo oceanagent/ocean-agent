@@ -464,6 +464,9 @@ def bracket_cfg(policy: dict) -> dict:
     """
     return {
         "slots": int(policy.get("bracket_slots", 3)),
+        # How many held positions may share one side. 0 is off, which is
+        # what shipped before 09-07 and stays the default.
+        "dir_cap": int(policy.get("bracket_dir_cap", 0) or 0),
         "leverage": int(policy.get("bracket_leverage", 3)),
         "deploy_pct": float(policy.get("bracket_deploy_pct", 0.97)),
         # share of spendable margin the user lets the bot use; 100 = all of
@@ -1207,6 +1210,58 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
                         f"청산을 예약한다 (보유 중 최저 {vpnl:+.2f}%)")
                 continue
             break
+        # Same-side cap. The Bollinger signals are all mean-reverting, so
+        # a market that runs lights the same side across many names at once
+        # and the book fills with what is effectively one oversized
+        # position. Alt/BTC correlation above 0.7 is the reason (chart study
+        # branch G); the seats look diversified and are not.
+        #
+        # Measured 09-07 (recent year, five seats, 30m entry delay, round
+        # trip fee, 15m scoring). Per trade barely moves; the drawdown does:
+        #
+        #     no cap    per trade -0.053%  worst day -43.74%  drawdown 260.66%
+        #     cap 3               -0.021%            -41.41%           147.78%
+        #     cap 2               -0.025%            -30.36%           155.98%
+        #     +MACD, cap 2        +0.217%            -11.04%            52.92%
+        #
+        # This is not an edge claim. The means are all inside their error
+        # bars. The worst day and the drawdown are not error bars: they are
+        # what the book actually lived through.
+        _dcap = cfg.get("dir_cap", 0)
+        if _dcap > 0:
+            _same = sum(1 for _s, _q in st["positions"].items()
+                        if _q.get("dir") == p["dir"]
+                        and not _q.get("evict_req"))
+            if _same >= _dcap:
+                # A priority pick still gets in, but by replacing the worst
+                # holding ON ITS OWN SIDE. Evicting the other side would
+                # leave the cap breached, which is the thing being capped.
+                if p.get("seat_priority") and not dry:
+                    victim, vpnl = None, 0.0
+                    for vsym, vpos in st["positions"].items():
+                        if vpos.get("dir") != p["dir"]:
+                            continue
+                        if vpos.get("seat_priority") or vpos.get("evict_req"):
+                            continue
+                        ve = float(vpos.get("entry_fill") or 0)
+                        vm = float(prices.get(vsym, {}).get("mark")
+                                   or prices.get(vsym, {}).get("mid") or 0)
+                        if ve <= 0 or vm <= 0:
+                            continue
+                        pnl = ((vm / ve - 1) if vpos.get("dir") == "long"
+                               else (1 - vm / ve)) * 100
+                        if victim is None or pnl < vpnl:
+                            victim, vpnl = vsym, pnl
+                    if victim is not None:
+                        st["positions"][victim]["evict_req"] = "dir_cap"
+                        save_state(st)
+                        log(f"{victim}: 우선 픽({p['sym']})에 같은 방향 "
+                            f"자리를 내주려고 청산을 예약한다 "
+                            f"(그 방향 최저 {vpnl:+.2f}%)")
+                        continue
+                log(f"{p['sym']} {p['dir']}: 같은 방향이 이미 {_same}자리라 "
+                    f"건너뜀 (상한 {_dcap})")
+                continue
         sym, direction = p["sym"], p["dir"]
         touch_dir = direction
         seat_src = _side_source
@@ -3490,7 +3545,9 @@ def main():
            if float(cfg.get("early_cut_pct") or 0) > 0
            else f"{cfg['sl_mult']}x") + " · "
         + f"하한 {policy.get('bracket_vol_floor_pct', 0)}% · "
-        f"{'DRY RUN' if args.dry else '실주문'}")
+        + (f"같은 방향 최대 {cfg['dir_cap']} · " if cfg.get("dir_cap")
+           else "")
+        + f"{'DRY RUN' if args.dry else '실주문'}")
     try:
         while True:
             # The guard wraps the whole turn, not just cycle(). Four calls
