@@ -111,6 +111,8 @@ _dry_logged: set[str] = set()
 # arm this cooldown; the seal wakeup honors it. (review P4)
 _retry_not_before: float = 0.0
 ENTRY_RETRY_COOLDOWN_SEC = 300
+# Seat count for fresh_seal_waiting, which has no cfg. Set once in main().
+_SLOTS_NOW = 0
 # How long a warning key stays quiet after ringing (2026-08-21 user choice).
 # The two ends were both wrong: comparing message text re-sent every cycle
 # because the text carries a running average, and suppressing on the key
@@ -1715,8 +1717,34 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
                        f"진입 0건: 계좌가 이 자리 크기에 못 미칩니다 "
                        f"(픽 {len(picks)}개 전부 최소 주문 미달). "
                        f"입금하거나 픽당 금액을 낮추세요.")
-        if attempt_failed == 0:
+        # A seal is spent when the book is full, not when the loop has
+        # walked its list once. Before this, one pass consumed it: a seat
+        # that freed a minute later sat empty until the next seal, thirty
+        # to forty minutes on. That is most of an hour of an eight-seat
+        # book running on four. It also silently defeated the priority
+        # pick, which books an eviction and returns - by the time the seat
+        # is actually empty the seal it came from is already marked used.
+        #
+        # So keep it open while seats remain and it is still inside its
+        # window. The guards that made "spent" safe are all still on the
+        # path: entered_seals for the full case, the position check for
+        # held symbols, entry_misses for names that will not fill, and the
+        # 6h age test above. (09-07 user instruction: 자리 생겨도 바로
+        # 들어가)
+        _seats_left = cfg["slots"] - len(st["positions"])
+        if attempt_failed == 0 and _seats_left <= 0:
             st["entered_seals"].append(key)
+        elif attempt_failed == 0:
+            log(f"봉인 열어 둠: 자리 {_seats_left}개 남음. 비는 대로 이 "
+                f"봉인에서 이어 채운다 (봉인 6시간 안에서)")
+            if entered_n == 0:
+                # Nothing went in and the seal stays open, so the 30s poll
+                # would wake a full cycle every half minute for as long as
+                # a seat is free. That is the 388-cycles-in-four-hours
+                # failure the funds path already guards against. Cool off;
+                # a seat that frees will still be picked up on the next
+                # pass after the cooldown.
+                _cool_down()
         else:
             # Unfilled picks get retried at the SAME anchor while this seal
             # is current (every ENTRY_RETRY_COOLDOWN_SEC), not once per
@@ -3075,6 +3103,11 @@ def fresh_seal_waiting(st: dict, dry: bool) -> bool:
         return False
     if time.time() < _retry_not_before:
         return False        # failed pass cooling down, no hot loop (P4)
+    # A seal now stays open while seats remain (09-07), so this can be true
+    # for its whole six hours. Waking a full cycle for a book that has no
+    # room is work with nothing to do at the end of it.
+    if _SLOTS_NOW and len(st.get("positions") or {}) >= _SLOTS_NOW:
+        return False
     try:
         made = dt.datetime.fromisoformat(rec["made_at"])
     except (KeyError, ValueError):
@@ -3352,6 +3385,7 @@ def main():
                 ".env 에 ADDRESS 와 PACIFICA_API_KEY 를 넣고 다시 시작하세요.")
             return
     cfg = apply_budget(bracket_cfg(policy))
+    global _SLOTS_NOW
     global _selfgen_enabled, _tp_limit, _entry_limit, _entry_wait, _sl_buf
     global _side_source, _advisory_alerts, _sl_maker, _entry_max_tries
     _selfgen_enabled = bool(policy.get("bracket_selfgen_seal", True))
@@ -3536,6 +3570,7 @@ def main():
             notify.send("⚠️ " + msg)
         return
 
+    _SLOTS_NOW = cfg["slots"]
     tp_txt = (f"TP {cfg['tp_pct']}% 고정" if cfg["tp_pct"] > 0
               else f"TP {cfg['tp_mult']}x")
     log(f"브래킷 트레이더 시작 · {MODE} 모드 · 슬롯 {cfg['slots']} · "
