@@ -107,3 +107,10 @@ audit/
 # operator_rules.new.py) sat outside a rule that matched the one filename
 # exactly, carrying the same rules, one `git add -A` from being staged.
 operator_rules*
+
+# safebot is an operator tool: kept out of the wheel on 08-24 by moving it
+# to the repo root, but it stayed tracked and so stayed in the public repo
+# for every release since. No secrets in it (checked 09-07: no tokens, no
+# addresses, no chat ids, reads no environment), so this only stops it
+# going out from here on; the history keeps what was already pushed.
+safebot.py

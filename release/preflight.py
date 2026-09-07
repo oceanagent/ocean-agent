@@ -293,6 +293,37 @@ def check_pins(whl: str) -> None:
            m.group(1) if m else "버전 표기 없음")
 
 
+def check_pypi_new(whl: str) -> None:
+    """Is this version still free on PyPI?
+
+    PyPI refuses a re-upload of a version that already exists, and this file
+    has said so in a comment since it was written without ever asking the
+    question. Across 0.4.67 to 0.4.71 the answer was checked by hand five
+    times in a row; the fifth time is what put it here.
+
+    A network failure is a warning, not a failure: preflight has to keep
+    working offline, and "could not ask" is a different fact from "the
+    version is taken".
+    """
+    ver = os.path.basename(whl).split("-")[1]
+    try:
+        import json
+        import urllib.request
+        with urllib.request.urlopen(
+                "https://pypi.org/pypi/ocean-agent/json", timeout=15) as r:
+            rel = json.load(r).get("releases") or {}
+    except Exception as e:                              # noqa: BLE001
+        warn(f"PyPI 조회 실패 ({type(e).__name__})",
+             f"{ver} 가 이미 올라가 있는지 확인하지 못했다. 손으로 볼 것")
+        return
+    taken = ver in rel
+    newest = max(rel, key=lambda v: [int(x) for x in v.split(".")
+                                     if x.isdigit()], default="없음")
+    ok(f"PyPI 에 {ver} 없음", not taken,
+       f"이미 올라가 있다. 버전을 올려 다시 만들어라 (현재 최신 {newest})"
+       if taken else f"현재 최신 {newest}")
+
+
 def check_freshness(whl: str) -> bool:
     """Does this wheel contain the code that is committed right now?
 
@@ -439,6 +470,7 @@ def main() -> int:
         return 1
     check_contents(whl)
     check_pins(whl)
+    check_pypi_new(whl)
     print()
     check_live(whl)
     print()

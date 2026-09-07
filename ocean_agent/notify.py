@@ -8,10 +8,47 @@ watching. The .env is loaded here instead, once, on first use.
 """
 
 import os
+import threading
+import time
 
 import requests
 
 _env_loaded = False
+
+# 09-07: the turn guard added on 09-06 calls send() on every unexpected
+# error and sleeps five seconds, so one stuck condition rang the phone
+# twelve times a minute until Telegram's own rate limit turned the calls
+# into "[알림 실패]" lines.
+#
+# Folding is OPT-IN, not the default. The first draft folded everything and
+# keyed on the text with digits masked, which would have silenced a warning
+# whose number was getting worse: "손절 이탈 3%" and "손절 이탈 8%" keyed the
+# same. An alert that goes quiet as the condition escalates is worse than a
+# noisy phone. So the key is the exact text, and only the call site that was
+# measured to repeat asks for the fold. The first one always goes out at
+# once; repeats inside REPEAT_S are counted and reported with the next.
+REPEAT_S = 900.0
+_LOCK = threading.Lock()
+_LAST: dict[str, tuple[float, int]] = {}
+
+
+def _throttle(text: str) -> tuple[bool, int]:
+    """(send it?, how many were folded in since the last one)."""
+    key = text[:400]
+    now = time.monotonic()
+    with _LOCK:
+        prev = _LAST.get(key)
+        if prev is None or now - prev[0] >= REPEAT_S:
+            _LAST[key] = (now, 0)
+            # A process that runs for weeks must not grow a key per
+            # distinct message; the oldest go first once it is large.
+            if len(_LAST) > 500:
+                for k, _v in sorted(_LAST.items(),
+                                    key=lambda kv: kv[1][0])[:100]:
+                    _LAST.pop(k, None)
+            return True, 0 if prev is None else prev[1]
+        _LAST[key] = (prev[0], prev[1] + 1)
+        return False, 0
 
 
 def _load_env_once() -> None:
@@ -35,17 +72,31 @@ def _load_env_once() -> None:
             break
 
 
-def send(text: str) -> None:
+def send(text: str, *, fold: bool = False) -> None:
+    """Say it. Every call goes out unless the caller asks to fold repeats.
+
+    `fold=True` is for a call site that fires on a loop while one condition
+    persists: the first goes at once, then at most one per REPEAT_S, each
+    carrying how many were folded in. The console keeps every line either
+    way.
+    """
     print(f"[알림] {text}")
     _load_env_once()
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
     if not token or not chat_id:
         return
+    body = text
+    if fold:
+        go, folded = _throttle(text)
+        if not go:
+            return                      # console still has every line
+        if folded:
+            body = f"{text}\n(같은 알림 {folded}건 묶임)"
     try:
         r = requests.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": text},
+            json={"chat_id": chat_id, "text": body},
             timeout=10,
         )
         # The warning path is the account's only voice now (the halt was

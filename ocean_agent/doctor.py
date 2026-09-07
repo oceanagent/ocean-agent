@@ -96,14 +96,28 @@ def main():
     # is written elsewhere by the installer while this only looked in the
     # current folder, and Node.js is for Pacifica MCP mode. The one question
     # that mattered, "can Claude see the tools", was never asked.
+    # 09-07: registration is only a failure for someone who uses Ocean Agent
+    # through Claude. Someone running the standalone bot never registers it,
+    # and counting the missing entry against them printed [X] plus "Not
+    # registered with Claude" at the end for a machine that was working. A
+    # config.yaml on disk is what says the standalone bot lives here, the
+    # same signal check 5 below already uses in the other direction.
+    standalone = os.path.exists("config.yaml")
     cfg_path, entry = _claude_entry()
     reg_ok = entry is not None
-    check("Registered with Claude", reg_ok,
-          f"found in {os.path.basename(cfg_path)}" if reg_ok
-          else ("ocean-agent is not in your Claude config. Run the install "
-                "command again" if cfg_path else "could not find a Claude "
-                "config file. Open Claude once, then try again"))
-    all_ok &= reg_ok
+    if reg_ok:
+        check("Registered with Claude", True,
+              f"found in {os.path.basename(cfg_path)}")
+    elif standalone:
+        print("[--] Registered with Claude, not registered. That is fine for "
+              "the standalone bot; run the install command if you want to "
+              "use it inside Claude")
+    else:
+        check("Registered with Claude", False,
+              "ocean-agent is not in your Claude config. Run the install "
+              "command again" if cfg_path else "could not find a Claude "
+              "config file. Open Claude once, then try again")
+        all_ok = False
 
     # 5. Config file. When registered as MCP, having no config.yaml is the
     # normal case, so it is only counted against you when it is needed.
@@ -180,7 +194,7 @@ def main():
         all_ok = False
         check("Connection", False, str(e)[:150])
 
-    if not reg_ok:
+    if not reg_ok and not standalone:
         print("\n[!] Not registered with Claude. Run the install command "
               "again, then quit Claude completely and reopen it. Closing "
               "the window is not enough: on Windows, right-click the tray "

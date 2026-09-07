@@ -3619,8 +3619,14 @@ def main():
                         save_state(st)
                     except Exception:              # noqa: BLE001
                         log("    상태 저장도 실패했습니다")
+                # fold: this is the one site that fires every five seconds
+                # while a condition persists, so a stuck loop rang the phone
+                # twelve times a minute. The first still goes out at once;
+                # identical repeats are counted and reported with the next.
+                # A different error text is a different condition and rings
+                # immediately, and the log keeps every one either way.
                 notify.send(f"브래킷 예상 밖 오류: {type(e).__name__}: "
-                            f"{str(e)[:150]}")
+                            f"{str(e)[:150]}", fold=True)
                 time.sleep(5)              # 같은 오류로 고리를 태우지 않는다
     finally:
         if not args.dry:

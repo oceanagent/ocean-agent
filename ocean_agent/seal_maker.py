@@ -899,6 +899,15 @@ def make_seal(out_dir: str | None = None, log=print) -> str | None:
                     if board else
                     ("자산군 점수판 없이 운영자 규칙이 직접 고른 픽 → "
                      "호가 관문(슬리피지) → 베이스 모드 변동성 브래킷")),
+           # The generation tag for the seal as a whole. Picks have carried
+           # their own since the sizing switch, but the file had no
+           # top-level one, so a seal built off the scan path (or with the
+           # scored board skipped) left the column blank for that stretch
+           # and the pools could not be told apart afterwards. Read from
+           # the picks rather than the trader's current setting, for the
+           # same reason the per-pick tag is built where the pick is.
+           "pred_input": next((p.get("pred_input") for p in picks
+                               if p.get("pred_input")), None),
            "picks": picks, "scores": {}}
     out_dir = out_dir or OUTPUTS_DIR
     os.makedirs(out_dir, exist_ok=True)
