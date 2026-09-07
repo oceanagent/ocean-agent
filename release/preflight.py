@@ -276,20 +276,38 @@ def check_pins(whl: str) -> None:
     # page is what a user reads, and it drifting means "installs 0.4.36 while
     # the screen says 0.4.37"; the READMEs said @latest, which is a different
     # policy from the pinned installers and resolved to the broken build.
-    for path, pat in (("mcpb/pyproject.toml", r'ocean-agent==([\d.]+)'),
-                      ("mcpb/manifest.json", r'"version":\s*"([\d.]+)"'),
-                      ("README.md", r'ocean-agent@([\d.]+)'),
-                      ("README.ko.md", r'ocean-agent@([\d.]+)'),
-                      ("website/index.html", r'currently at version (\d+(?:\.\d+)+)'),
-                      ("website/index.html", r'<div><b>([\d.]+)</b><span>current version')):
+    # 09-07: mcpb/pyproject.toml carries TWO versions, its own package
+    # version and the ocean-agent dependency, and only the dependency was
+    # matched here. Bumping to 0.4.72 found its own version still at 0.4.71
+    # with every check passing. That is the same blind spot that left the
+    # MCPB pin at 0.3.2 for thirty-four releases, one line further up the
+    # same file.
+    # Two entries can share a file, so each carries the name it prints under:
+    # "mcpb/pyproject.toml 가 0.4.72" twice says nothing about which of the
+    # two lines passed.
+    for path, pat, what in (
+            ("mcpb/pyproject.toml", r'^version\s*=\s*"([\d.]+)"',
+             "mcpb 자체 버전"),
+            ("mcpb/pyproject.toml", r'ocean-agent==([\d.]+)',
+             "mcpb 의 ocean-agent 핀"),
+            ("mcpb/manifest.json", r'"version":\s*"([\d.]+)"',
+             "mcpb/manifest.json"),
+            ("README.md", r'ocean-agent@([\d.]+)', "README.md"),
+            ("README.ko.md", r'ocean-agent@([\d.]+)', "README.ko.md"),
+            ("website/index.html", r'currently at version (\d+(?:\.\d+)+)',
+             "홈페이지 본문"),
+            ("website/index.html",
+             r'<div><b>([\d.]+)</b><span>current version', "홈페이지 배지")):
         full = os.path.join(ROOT, path)
         try:
             text = open(full, encoding="utf-8").read()
         except OSError:
-            ok(f"{path} 버전", False, "파일 없음")
+            ok(f"{what} 버전", False, "파일 없음")
             continue
-        m = re.search(pat, text)
-        ok(f"{path} 가 {ver}", bool(m) and m.group(1) == ver,
+        # re.M so a pattern anchored to a line start finds it anywhere in
+        # the file; without it "^version" matched only the first line.
+        m = re.search(pat, text, re.M)
+        ok(f"{what} 가 {ver}", bool(m) and m.group(1) == ver,
            m.group(1) if m else "버전 표기 없음")
 
 
