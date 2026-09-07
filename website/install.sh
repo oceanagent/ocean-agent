@@ -2,7 +2,7 @@
 # Ocean Agent one-command installer (macOS / Linux)
 # Installs uv, writes .env, and registers the MCP server in Claude Desktop.
 set -e
-OA_PKG="ocean-agent@0.4.70"
+OA_PKG="ocean-agent@0.4.71"
 echo ""
 echo "=== Ocean Agent installer ==="
 

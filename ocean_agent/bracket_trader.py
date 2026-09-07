@@ -1218,17 +1218,13 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
         # position. Alt/BTC correlation above 0.7 is the reason (chart study
         # branch G); the seats look diversified and are not.
         #
-        # Measured 09-07 (recent year, five seats, 30m entry delay, round
-        # trip fee, 15m scoring). Per trade barely moves; the drawdown does:
-        #
-        #     no cap    per trade -0.053%  worst day -43.74%  drawdown 260.66%
-        #     cap 3               -0.021%            -41.41%           147.78%
-        #     cap 2               -0.025%            -30.36%           155.98%
-        #     +MACD, cap 2        +0.217%            -11.04%            52.92%
-        #
-        # This is not an edge claim. The means are all inside their error
-        # bars. The worst day and the drawdown are not error bars: they are
-        # what the book actually lived through.
+        # Measured on the recent year with five seats, a 30-minute entry
+        # delay, the round-trip fee and 15m scoring. Per trade barely
+        # moves, and every mean sits inside its error bar, so this is not
+        # an edge claim. What moves is the worst day and the peak
+        # drawdown, and those are not error bars: they are what the book
+        # actually lived through, and capping the side cut both of them
+        # by a wide margin. The figures live in the measurement ledger.
         _dcap = cfg.get("dir_cap", 0)
         if _dcap > 0:
             _same = sum(1 for _s, _q in st["positions"].items()
