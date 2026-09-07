@@ -199,6 +199,10 @@ def main():
               "again, then quit Claude completely and reopen it. Closing "
               "the window is not enough: on Windows, right-click the tray "
               "icon next to the clock and choose Quit.")
+    elif all_ok and not reg_ok:
+        # Standalone, and everything it needs is here. Sending this person
+        # to Claude's chat box is the same mistake as the [X] above.
+        print("\n[OK] Ready. Start the bot from this folder.")
     elif all_ok:
         print("\n[OK] Ready. Quit Claude completely, open it again, and say "
               "\"show me today's picks\" in Claude's chat box.")

@@ -2770,7 +2770,19 @@ SEAL_POLL_SEC = 30
 # Read off the last build rather than pinned, so switching modes cannot
 # leave the wrong number behind. Half an hour until the first build tells
 # us which mode we are in.
-SEAL_FRESH_FAST_H = 0.25
+# 09-07: the quarter-hour branch is switched off, and the reason is the
+# measurements rather than the build cost. The signal is a 1h Bollinger, so
+# a fresh seal every fifteen minutes re-reads the same signal four times;
+# what it actually changes is WHEN the entry happens. Every replay behind
+# today's decisions enters two 15m bars (30 minutes) after the signal bar
+# closes, which is what the live cadence measured at (median 34 min) when
+# the seal ran on the half hour. Cutting the wait to fifteen minutes makes
+# the running bot a different experiment from the one that was measured,
+# and the delay is not free to move: the paired test put its value at
+# +0.0132%p ± 0.0297, which is "cannot measure", not "no difference".
+# Keep the constant and the branch: when the board comes back the build
+# cost changes again, and the next person needs to see which knob is which.
+SEAL_FRESH_FAST_H = 0.5         # was 0.25; see above
 SEAL_FRESH_SLOW_H = 0.5
 SEAL_FAST_SECS = 90.0           # under this, the seal is the cheap kind
 _last_seal_secs = 0.0
