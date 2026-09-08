@@ -37,7 +37,7 @@ re-run `uvx --version`.
 ## Step 1, Provide keys via environment (never in config files)
 
 The user creates an **API key** at **[app.pacifica.fi/apikey](https://app.pacifica.fi/apikey)**.
-Ocean Agent signs orders with this key and has no withdrawal function. You can revoke it at any time.
+Ocean Agent signs orders with this key and never moves funds off the exchange. What the key itself is permitted to do is set by Pacifica, not by us, and you can revoke it at any time.
 Read-only tools work without a key.
 
 **Do not ask for the key value.** Instead, tell the user to put their values in a
@@ -215,7 +215,7 @@ env = { PACIFICA_ENV_FILE = "/absolute/path/to/.pacifica.env", PACIFICA_BASE_URL
 
 ## Safety
 
-- This software has no withdrawal function; the key's own permissions are set by the exchange.
+- This software never moves funds off the exchange; the key's own permissions are set by the exchange.
 - Testnet and mainnet keys are kept separate (`*_TESTNET` variables).
 - Money-moving tools preview first and execute only on explicit confirmation.
 - Leveraged perpetuals can lose more than the margin posted. Run with `--dry` until

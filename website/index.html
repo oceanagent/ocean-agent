@@ -843,7 +843,7 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
           <p>The leg Ocean Agent already trades.</p>
           <ol class="fc-steps">
             <li>Open <a href="https://app.pacifica.fi/apikey" target="_blank" rel="noopener">app.pacifica.fi/apikey</a> and connect your Solana wallet.</li>
-            <li>Generate an agent key. There are no permission checkboxes to get wrong. Ocean Agent uses it to sign orders and has no withdrawal function.</li>
+            <li>Generate an agent key. There are no permission checkboxes to get wrong. Ocean Agent signs orders with it and never sends a withdrawal. What the key itself is permitted to do is set by Pacifica, not by us.</li>
             <li>Copy the key. You can revoke it on the same page at any time.</li>
           </ol>
           <p>You get one agent key, used together with your wallet's public address. The installer already wrote both into your local .env, the only place Ocean Agent reads keys from:</p>
@@ -959,7 +959,7 @@ EXTENDED_STARK_PRIVATE_KEY=...</code></pre>
           <ol class="fc-steps">
             <li>Open app.hyperliquid.xyz, connect your wallet, and go to the API page at <a href="https://app.hyperliquid.xyz/API" target="_blank" rel="noopener">app.hyperliquid.xyz/API</a>.</li>
             <li>Create an agent wallet (also called an API wallet) and name it, then approve it with one signature from your main wallet.</li>
-            <li>Save the agent's address and private key; the private key is shown once. The agent can sign orders and can never withdraw, and you can deauthorize it in the same UI.</li>
+            <li>Save the agent's address and private key; the private key is shown once. Ocean Agent uses it to sign orders only. What the agent wallet itself may do is set by Hyperliquid, and you can deauthorize it in the same UI.</li>
             <li>Give the bot only the agent's private key, never your main wallet's seed.</li>
           </ol>
           <p>The agent wallet key replaces a key and secret pair. It belongs in your local .env, the only place Ocean Agent reads keys from:</p>
@@ -1214,7 +1214,7 @@ OKX_API_PASSPHRASE=...</code></pre>
         <thead><tr><th>Guard</th><th>What it prevents</th></tr></thead>
         <tbody>
           <tr><th>Two step confirm</th><td>Every money moving tool previews first and executes only on explicit confirmation.</td></tr>
-          <tr><th>Local keys</th><td>Keys stay in your local .env. The Software has no withdrawal function. Revoke at the Exchange any time.</td></tr>
+          <tr><th>Local keys</th><td>Keys stay in your local .env. The Software never moves funds off the Exchange. What the key may do is set by the Exchange; revoke it there any time.</td></tr>
           <tr><th>Key separation</th><td>Testnet and mainnet keys and data are kept apart.</td></tr>
           <tr><th>Hard sizing guard</th><td>An order whose notional cannot be priced is rejected outright, and a notional ceiling applies once you set <code>order_cap_usd</code> in your policy. Chat orders carry no fixed dollar cap by default.</td></tr>
           <tr><th>Liquidity gate</th><td>Skips markets where your own order would be a large share of daily volume.</td></tr>
@@ -1271,7 +1271,7 @@ OKX_API_PASSPHRASE=...</code></pre>
   <section class="page" id="faq">
     <div class="eyebrow">More · FAQ</div>
     <h2>Common questions</h2>
-    <div class="faq"><b>Can it withdraw my funds?</b><p>Ocean Agent never withdraws. It only opens and closes positions, and there is no transfer or withdrawal call anywhere in the code. What the API key itself is permitted to do is set by Pacifica, not by us. Keep the key on your own machine and revoke it any time.</p></div>
+    <div class="faq"><b>Can it withdraw my funds?</b><p>Ocean Agent never moves funds off the exchange. It opens and closes positions, and the only withdrawal call in the code brings a finished Print deposit back to your own account. What the API key itself is permitted to do is set by Pacifica, not by us. Keep the key on your own machine and revoke it any time.</p></div>
     <div class="faq"><b>Is it live yet?</b><p>Yes: live on mainnet with small size since July 2026. Sizes stay small until the live track record justifies more.</p></div>
     <div class="faq"><b>Does it work in my language?</b><p>Yes. You chat with your AI in any language; it drives the tools and explains the results in that language. Raw tool reports and this site are in English, but your AI translates as it goes.</p></div>
     <div class="faq"><b>Do I need to keep my PC on?</b><p>The autonomous entity needs its own process running, but stops are exchange native and fire even if your machine goes offline.</p></div>
@@ -1707,8 +1707,8 @@ OKX_API_PASSPHRASE=...</code></pre>
             landscape of crypto and supply chain attacks, and tightened a few things as a
             result. No issue was ever exploited.</p>
 
-          <p>The design principles that keep funds safe were confirmed intact: the trading key
-            has no withdrawal function, every order that moves money passes an
+          <p>The design principles that keep funds safe were confirmed intact: Ocean Agent
+            never sends a withdrawal, every order that moves money passes an
             explicit confirmation and a hard size ceiling, and the agent only ever signs
             requests it built itself. Your keys stay on your machine and are never transmitted
             to us.</p>
@@ -1990,7 +1990,7 @@ OKX_API_PASSPHRASE=...</code></pre>
     <p>The Software has no sign up, no login, and no user database. The Authors do not collect, store, or transmit your personal data, your keys, your balances, or your trading history, everything the Software records lives in files on your own computer. This site is a static page and sets no tracking of its own. The only parties that see your activity are the Exchange (which you have a direct relationship with under its own terms) and, if you use an AI Client, that client's provider.</p>
 
     <h3>5 · Non custodial design: wallets and keys</h3>
-    <p>The Software never holds your funds and never sees your wallet's seed phrase. It signs requests locally with the Agent Key you supply and sends them straight to the Exchange. The Software has no withdrawal or transfer function. The permissions the Agent Key itself carries are set by the Exchange, and you can revoke it there at any time. Signed requests go directly from your computer to the Exchange, there is no intermediate server.</p>
+    <p>The Software never holds your funds and never sees your wallet's seed phrase. It signs requests locally with the Agent Key you supply and sends them straight to the Exchange. The Software never moves your funds off the Exchange or to any address other than your own; its one withdrawal call returns a finished Print deposit to your own account. The permissions the Agent Key itself carries are set by the Exchange, and you can revoke it there at any time. Signed requests go directly from your computer to the Exchange, there is no intermediate server.</p>
     <p>Because of this design, the Authors cannot: access your account, freeze or unfreeze anything, recover keys you lose, cancel or reverse orders, or return funds. There is no support desk that can undo a trade. Anyone who obtains your Agent Key can trade your account until you revoke it; keeping it secret, and keeping the computer it lives on secure, is entirely your responsibility.</p>
 
     <h3>6 · The MCP server and AI clients</h3>

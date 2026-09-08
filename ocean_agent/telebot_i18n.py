@@ -1576,17 +1576,17 @@ T["ask_wallet"] = {
  "tr": "Cüzdan adresinizi yapıştırın (Pacifica girişinde kullanılan herkese açık Solana adresi). Salt okunur, güvenlidir. Sonraya bırakmak için 'no' yazın.",
  "es": "Pega la dirección de tu billetera (la dirección pública de Solana con la que entras a Pacifica). Solo lectura, es segura. Responde 'no' para hacerlo luego."}
 T["ask_apikey"] = {
- "ko": "이제 파시피카 API 키를 붙여넣어 주세요. app.pacifica.fi/apikey 에서 발급합니다. 거래 전용 키라 출금은 불가능하고, 입력하신 메시지는 보안을 위해 바로 지워집니다. 나중에 하려면 '아니'.",
- "en": "Now paste your Pacifica API key, issued at app.pacifica.fi/apikey. It can only trade, never withdraw, and your message is deleted right away for safety. Reply 'no' to do this later.",
- "zh": "现在请粘贴您的 Pacifica API 密钥（在 app.pacifica.fi/apikey 领取）。该密钥只能交易，不能提款，您的消息会立即删除以保安全。稍后设置请回复 'no'。",
- "ja": "次に Pacifica API キーを貼り付けてください（app.pacifica.fi/apikey で発行）。取引専用で出金は不可、貼り付けたメッセージは安全のためすぐ削除されます。後にするなら 'no'。",
- "vi": "Bây giờ dán API key Pacifica của bạn (cấp tại app.pacifica.fi/apikey). Chỉ giao dịch được, không rút tiền được, và tin nhắn của bạn sẽ bị xóa ngay để an toàn. Trả lời 'no' để làm sau.",
- "hi": "अब अपनी Pacifica API key पेस्ट करें (app.pacifica.fi/apikey से)। यह केवल ट्रेड कर सकती है, निकासी नहीं, और सुरक्षा के लिए आपका संदेश तुरंत हटा दिया जाएगा। बाद के लिए 'no' लिखें।",
- "id": "Sekarang tempel API key Pacifica Anda (dari app.pacifica.fi/apikey). Hanya bisa trading, tidak bisa menarik dana, dan pesan Anda langsung dihapus demi keamanan. Balas 'no' untuk nanti.",
- "ru": "Теперь вставьте ваш API ключ Pacifica (выдаётся на app.pacifica.fi/apikey). Он может только торговать, не выводить средства; ваше сообщение сразу удаляется для безопасности. Ответьте 'no', чтобы отложить.",
- "pt": "Agora cole sua API key da Pacifica (emitida em app.pacifica.fi/apikey). Ela só negocia, nunca saca, e sua mensagem é apagada imediatamente por segurança. Responda 'no' para depois.",
- "tr": "Şimdi Pacifica API anahtarınızı yapıştırın (app.pacifica.fi/apikey adresinden). Yalnızca işlem yapabilir, para çekemez; mesajınız güvenlik için hemen silinir. Sonraya bırakmak için 'no'.",
- "es": "Ahora pega tu API key de Pacifica (emitida en app.pacifica.fi/apikey). Solo puede operar, nunca retirar, y tu mensaje se borra de inmediato por seguridad. Responde 'no' para luego."}
+ "ko": "이제 파시피카 API 키를 붙여넣어 주세요. app.pacifica.fi/apikey 에서 발급합니다. 오션에이전트는 이 키로 주문만 넣고 출금은 하지 않으며, 입력하신 메시지는 보안을 위해 바로 지워집니다. 나중에 하려면 '아니'.",
+ "en": "Now paste your Pacifica API key, issued at app.pacifica.fi/apikey. Ocean Agent only places and closes orders with it and never withdraws, and your message is deleted right away for safety. Reply 'no' to do this later.",
+ "zh": "现在请粘贴您的 Pacifica API 密钥（在 app.pacifica.fi/apikey 领取）。Ocean Agent 只用它下单和平仓，从不提款，您的消息会立即删除以保安全。稍后设置请回复 'no'。",
+ "ja": "次に Pacifica API キーを貼り付けてください（app.pacifica.fi/apikey で発行）。Ocean Agent はこのキーで注文のみ行い出金はしません、貼り付けたメッセージは安全のためすぐ削除されます。後にするなら 'no'。",
+ "vi": "Bây giờ dán API key Pacifica của bạn (cấp tại app.pacifica.fi/apikey). Ocean Agent chỉ dùng nó để đặt và đóng lệnh, không bao giờ rút tiền, và tin nhắn của bạn sẽ bị xóa ngay để an toàn. Trả lời 'no' để làm sau.",
+ "hi": "अब अपनी Pacifica API key पेस्ट करें (app.pacifica.fi/apikey से)। Ocean Agent इससे केवल ऑर्डर लगाता और बंद करता है, निकासी कभी नहीं, और सुरक्षा के लिए आपका संदेश तुरंत हटा दिया जाएगा। बाद के लिए 'no' लिखें।",
+ "id": "Sekarang tempel API key Pacifica Anda (dari app.pacifica.fi/apikey). Ocean Agent hanya memakainya untuk order, tidak pernah menarik dana, dan pesan Anda langsung dihapus demi keamanan. Balas 'no' untuk nanti.",
+ "ru": "Теперь вставьте ваш API ключ Pacifica (выдаётся на app.pacifica.fi/apikey). Ocean Agent использует его только для ордеров и никогда не выводит средства; ваше сообщение сразу удаляется для безопасности. Ответьте 'no', чтобы отложить.",
+ "pt": "Agora cole sua API key da Pacifica (emitida em app.pacifica.fi/apikey). O Ocean Agent só a usa para ordens e nunca saca, e sua mensagem é apagada imediatamente por segurança. Responda 'no' para depois.",
+ "tr": "Şimdi Pacifica API anahtarınızı yapıştırın (app.pacifica.fi/apikey adresinden). Ocean Agent onu yalnızca emirler için kullanır, para çekmez; mesajınız güvenlik için hemen silinir. Sonraya bırakmak için 'no'.",
+ "es": "Ahora pega tu API key de Pacifica (emitida en app.pacifica.fi/apikey). Ocean Agent solo la usa para órdenes y nunca retira fondos, y tu mensaje se borra de inmediato por seguridad. Responde 'no' para luego."}
 T["setup_saved_addr"] = {
  "ko": "지갑 주소 저장 완료 ✅ 이제 잔고와 포지션 조회가 됩니다.",
  "en": "Wallet address saved ✅ Balance and position lookups now work.",

@@ -204,7 +204,7 @@ prepend `uv run --with ocean-agent`.
 
 ## Safety
 
-- This software has no withdrawal function; the key's own permissions are set by the exchange
+- This software never moves funds off the exchange; the key's own permissions are set by the exchange
 - Every order tool previews first and executes only on explicit confirmation
 - Testnet and mainnet keys are kept separate
 - The autonomous entity acts only within `policy.yaml`
