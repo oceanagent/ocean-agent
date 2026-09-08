@@ -294,6 +294,14 @@ def check_pins(whl: str) -> None:
              "mcpb/manifest.json"),
             ("README.md", r'ocean-agent@([\d.]+)', "README.md"),
             ("README.ko.md", r'ocean-agent@([\d.]+)', "README.ko.md"),
+            # 09-08: setup-mcp.md was never checked here, and both copies
+            # drifted off the pin. The root said "ocean-agent@latest" and the
+            # website copy said plain "ocean-agent", which pins nothing at all
+            # and hands a user whatever uvx had cached. Same blind spot as the
+            # MCPB pin: a version written where nothing reads it back.
+            ("setup-mcp.md", r'ocean-agent@([\d.]+)', "setup-mcp.md"),
+            ("website/setup-mcp.md", r'ocean-agent@([\d.]+)',
+             "website/setup-mcp.md"),
             ("website/index.html", r'currently at version (\d+(?:\.\d+)+)',
              "홈페이지 본문"),
             ("website/index.html",
@@ -309,6 +317,18 @@ def check_pins(whl: str) -> None:
         m = re.search(pat, text, re.M)
         ok(f"{what} 가 {ver}", bool(m) and m.group(1) == ver,
            m.group(1) if m else "버전 표기 없음")
+
+    # The two setup-mcp.md are meant to be one document served from two
+    # places. Checking each pin separately would still let the rest of the
+    # text drift, which is how the ADDRESS rows ended up worded differently.
+    try:
+        a = open(os.path.join(ROOT, "setup-mcp.md"), encoding="utf-8").read()
+        b = open(os.path.join(ROOT, "website", "setup-mcp.md"),
+                 encoding="utf-8").read()
+        ok("setup-mcp.md 두 벌이 같은가", a == b,
+           "같음" if a == b else "다름. website/ 쪽을 루트로 맞출 것")
+    except OSError as e:
+        ok("setup-mcp.md 두 벌이 같은가", False, str(e))
 
 
 def check_pypi_new(whl: str) -> None:

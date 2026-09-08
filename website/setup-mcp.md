@@ -67,9 +67,9 @@ only the user ever types it, only into their own `.env`.
 
 | Variable | What it is | Network |
 |---|---|---|
-| `ADDRESS` | Wallet public address of your account | mainnet |
+| `ADDRESS` | Main wallet address (public) | mainnet |
 | `PACIFICA_API_KEY` | API key for signing orders | mainnet |
-| `ADDRESS_TESTNET` | Testnet wallet public address (optional) | testnet |
+| `ADDRESS_TESTNET` | Testnet wallet address (optional) | testnet |
 | `PACIFICA_API_KEY_TESTNET` | Testnet API key (optional) | testnet |
 | `PACIFICA_BASE_URL` | Network selector (see Step 3) | both |
 | `PACIFICA_ENV_FILE` | Absolute path to the `.env` above (optional) |, |
@@ -88,7 +88,7 @@ from Step 1 with `PACIFICA_ENV_FILE`, and pick the network with `PACIFICA_BASE_U
   "mcpServers": {
     "ocean-agent": {
       "command": "uvx",
-      "args": ["ocean-agent"],
+      "args": ["ocean-agent@0.4.72"],
       "env": {
         "PACIFICA_ENV_FILE": "/absolute/path/to/.pacifica.env",
         "PACIFICA_BASE_URL": "https://test-api.pacifica.fi"
@@ -106,7 +106,7 @@ file, still no literal secrets in the config:
   "mcpServers": {
     "ocean-agent": {
       "command": "uvx",
-      "args": ["ocean-agent"],
+      "args": ["ocean-agent@0.4.72"],
       "env": {
         "ADDRESS": "${ADDRESS}",
         "PACIFICA_API_KEY": "${PACIFICA_API_KEY}",
@@ -161,7 +161,7 @@ there are separate `*_TESTNET` variables.
 
 ## Appendix, Other clients
 
-Every client uses the same server definition (`command: "uvx"`, `args: ["ocean-agent"]`,
+Every client uses the same server definition (`command: "uvx"`, `args: ["ocean-agent@0.4.72"]`,
 same `env` block). Only the **file location / format** differs.
 
 | Client | Config file | Notes |
@@ -181,7 +181,7 @@ same `env` block). Only the **file location / format** differs.
     "ocean-agent": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["ocean-agent"],
+      "args": ["ocean-agent@0.4.72"],
       "env": {
         "PACIFICA_ENV_FILE": "/absolute/path/to/.pacifica.env",
         "PACIFICA_BASE_URL": "https://test-api.pacifica.fi"
@@ -196,7 +196,7 @@ same `env` block). Only the **file location / format** differs.
 ```toml
 [mcp_servers.ocean-agent]
 command = "uvx"
-args = ["ocean-agent"]
+args = ["ocean-agent@0.4.72"]
 env = { PACIFICA_ENV_FILE = "/absolute/path/to/.pacifica.env", PACIFICA_BASE_URL = "https://test-api.pacifica.fi" }
 ```
 
