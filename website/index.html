@@ -711,9 +711,9 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
       <div class="istep">
         <div class="ihead">Add to your client's MCP config (needs <a href="https://docs.astral.sh/uv/">uv</a>)</div>
         <div class="iwrap gated"><pre><code>{ "mcpServers": { "ocean-agent": {
-    "command": "uvx", "args": ["ocean-agent@latest"],
+    "command": "uvx", "args": ["ocean-agent@0.4.72"],
     "env": { "PACIFICA_ENV_FILE": "/absolute/path/to/.env" } } } }</code></pre><button class="cbtn" onclick="copyCode(this)">Copy</button></div>
-        <p class="body" style="margin-top:8px"><code>@latest</code> means every client restart checks PyPI and picks up new releases automatically. Your local data and keys are never touched by updates.</p>
+        <p class="body" style="margin-top:8px">The pinned version is the one the installers on this page use, so every client runs the exact build that was tested. When a newer release lands, a running session tells you once in chat and you change the number here to move. Your local data and keys are never touched by updates.</p>
       </div>
       <div class="istep">
         <div class="ihead">Check everything is wired</div>
@@ -1714,8 +1714,9 @@ OKX_API_PASSPHRASE=...</code></pre>
             to us.</p>
 
           <p>We review security on an ongoing basis and fold any hardening into the next
-            release. The best thing you can do is stay current: existing installs pick up the
-            latest version automatically on the next client restart.</p>
+            release. The best thing you can do is stay current: a running session tells you
+            once in chat when a newer version is on PyPI, and rerunning the installer moves
+            the pin.</p>
     </div>
   </section>
 
@@ -1801,10 +1802,10 @@ OKX_API_PASSPHRASE=...</code></pre>
             retrying after a cap, orphan positions raise an alert, and a project wide lint sweep
             removed 13 dead code findings.</p>
 
-          <h4>Updates arrive on their own</h4>
-          <p>Installs register the server as <b>ocean-agent@latest</b>, so every client restart
-            picks up the newest release. A session that is already running shows a one time
-            in chat notice when a newer version appears on PyPI.</p>
+          <h4>You are told when an update lands</h4>
+          <p>Installs pin an exact version, so a client restart keeps running the build that
+            was tested rather than whatever is newest that minute. A session that is already
+            running shows a one time in chat notice when a newer version appears on PyPI.</p>
 
           <p><a href="https://pypi.org/project/ocean-agent/" target="_blank" rel="noopener">pypi.org/project/ocean-agent</a></p>
     </div>

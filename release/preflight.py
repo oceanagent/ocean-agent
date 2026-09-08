@@ -304,6 +304,11 @@ def check_pins(whl: str) -> None:
              "website/setup-mcp.md"),
             ("website/index.html", r'currently at version (\d+(?:\.\d+)+)',
              "홈페이지 본문"),
+            # 09-08: the install snippet on the page said @latest while every
+            # installer pinned, so the page taught a policy the release does
+            # not follow. Nothing read this line back either.
+            ("website/index.html", r'"args": \["ocean-agent@([\d.]+)"\]',
+             "홈페이지 설치 예시"),
             ("website/index.html",
              r'<div><b>([\d.]+)</b><span>current version', "홈페이지 배지")):
         full = os.path.join(ROOT, path)
