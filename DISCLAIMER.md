@@ -56,10 +56,10 @@ not by us. Anyone who obtains it can trade your account.
 
 ## No warranty
 
-This software is provided "as is" under the MIT License, without warranty of any
-kind. The authors are not liable for any loss arising from its use, including
-losses caused by bugs, incorrect calculations, exchange outages, network
-failures, or misconfiguration.
+This software is provided "as is" under the Business Source License 1.1,
+without warranty of any kind. The authors are not liable for any loss
+arising from its use, including losses caused by bugs, incorrect
+calculations, exchange outages, network failures, or misconfiguration.
 
 ## Regulatory
 

@@ -223,4 +223,8 @@ uv run --with ocean-agent python -m ocean_agent.doctor
 
 ## 라이선스
 
-MIT, [LICENSE](LICENSE)
+Business Source License 1.1 (BUSL-1.1), [LICENSE](LICENSE)
+
+소스는 전부 공개돼 있습니다. 본인 계좌로 거래하는 것, 연구, 비상업적
+사용은 자유입니다. 경쟁하는 상업 거래 서비스로 제공하는 것은 안 됩니다.
+2030-08-25 에 자동으로 MIT 로 바뀝니다.
