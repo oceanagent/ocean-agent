@@ -2778,8 +2778,8 @@ SEAL_POLL_SEC = 30
 # closes, which is what the live cadence measured at (median 34 min) when
 # the seal ran on the half hour. Cutting the wait to fifteen minutes makes
 # the running bot a different experiment from the one that was measured,
-# and the delay is not free to move: the paired test put its value at
-# +0.0132%p ± 0.0297, which is "cannot measure", not "no difference".
+# and the delay is not free to move: the paired test put its value inside
+# its own error bar, which is "cannot measure", not "no difference".
 # Keep the constant and the branch: when the board comes back the build
 # cost changes again, and the next person needs to see which knob is which.
 SEAL_FRESH_FAST_H = 0.5         # was 0.25; see above
