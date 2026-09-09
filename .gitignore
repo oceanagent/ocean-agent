@@ -114,3 +114,9 @@ operator_rules*
 # addresses, no chat ids, reads no environment), so this only stops it
 # going out from here on; the history keeps what was already pushed.
 safebot.py
+
+# 09-09 전수검토 4-4: 전략 메커니즘이 적힌 문서 셋이 안 걸려 있었다.
+# git add -A 하면 공개 저장소로 나간다 (작업규칙 18조).
+재측정_목록.md
+개발자_배포검토_*.md
+배포분류_*.md
