@@ -307,27 +307,24 @@ def slip_cost(book, usd: float, side: str) -> float | None:
 # measured once and disagreed by several percent.
 
 def _cache_path(sym: str, bsym: str) -> str:
-    """이 종목의 봉이 사는 곳. 접합본이 있으면 그것, 없으면 옛 차례대로.
+    """이 종목의 봉이 사는 곳. 매매 경로는 파시피카 것만 본다.
 
-    2026-09-04 사용자 결정: 봇도 측정도 접합본만 본다.
+    2026-09-10 사용자 결정: **매매에 관련된 것은 전부 pac_ 만 본다.**
+    측정은 접합본(ub_)으로 하되, 그것은 research/ 쪽 일이고 여기가 아니다.
 
-    접합본(ub_)은 [파시피카 첫 봉 이전의 외부 봉] + [파시피카 그 뒤 전부] 다.
-    겹치는 구간은 파시피카가 이기므로, 우리가 실제로 매매하는 장부의 값을
-    쓰면서 그 이전 과거까지 갖는다. 위 주석이 경계한 "한 종목 안에서 두
-    거래소를 섞는 것" 과는 다르다. 섞는 것이 아니라 이어 붙인 것이고, 이음매는
-    검증한다 (08-08 가격 일치 0.04~0.15%, 09-04 이음매 0.10~0.56%).
+    09-04 결정("봇도 측정도 접합본만")을 이 줄이 대체한다. 그 결정이 깨진
+    것을 09-10 에 찾았다: 판을 없애면서 one() 을 아무 종목에도 안 부르게
+    됐고, 접합본을 갱신하는 코드가 그 안에 있어서 09-08 15:02 이후 71/72
+    종목이 멈췄다. 그동안 봇의 방향(볼린저)과 관문(ATR)은 운영자 규칙이
+    pac_ 로 내고 있었으므로, 접합본을 되살리는 것보다 매매 경로 전체를
+    파시피카 하나로 맞추는 쪽이 짧다. 우리가 주문을 넣는 장부가 그것이다.
 
-    이 줄이 바뀌기 전까지는 오히려 한 자리 안이 갈려 있었다. 봉인은 코인을
-    바이낸스 봉으로 뽑아 순위를 매기는데, 방향(볼린저)과 크기(1.85 x ATR28)는
-    운영자 규칙이 파시피카·접합본으로 냈다. 같은 자리를 두 장부로 판단했다.
+    파시피카는 1시간봉 125일치를 준다. one() 이 요구하는 WIN+PER = 744봉
+    (31일) 의 네 배다. 깊이는 문제가 아니고, 반년씩 잘라 국면을 비교할 때만
+    모자라는데 그것은 측정이지 매매가 아니다.
 
-    배포본에는 ub_ 파일이 없다. 그 경우 아래 두 줄이 그대로 돌아 예전과 같다.
+    bsym 은 이제 쓰지 않는다. 부르는 쪽 서명을 건드리지 않으려고 남겨 둔다.
     """
-    ub = os.path.join(hd.CACHE_DIR, f"ub_{sym}_1h_ohlc.json.gz")
-    if os.path.exists(ub):
-        return ub
-    if bsym:
-        return os.path.join(hd.CACHE_DIR, f"{bsym}_1h_fut_ohlc.json.gz")
     return os.path.join(hd.CACHE_DIR, f"pac_{sym}_1h_ohlc.json.gz")
 
 
@@ -440,24 +437,28 @@ def _drop_open_bar(bars: list[dict]) -> list[dict]:
 
 
 def load_bars(sym: str, base_url: str) -> tuple[list[dict], str]:
-    """1h bars for one symbol from a single source, cache first.
+    """1h bars for one symbol, Pacifica only, cache first.
 
-    Binance futures when the symbol is listed there, Pacifica otherwise.
     A non-empty note means the symbol must be skipped, not guessed at.
 
     The cache holds the history and the fetch covers only what came after
     it, so the ranking window can be 90 days without asking for 90 days of
     bars every hour. When there is no cache the fetch is what it always
     was and the cache is written for next time.
+
+    2026-09-10: the venue branch is gone. Every caller of this function is
+    on the trading path (one() scores the board, btc_line() prints the
+    regime beside the picks), and the user's rule for that path is one
+    venue: the one the order goes to. Binance used to win here whenever the
+    symbol was listed there, so a pick could be ranked on one book and
+    filled on another. _cache_path now returns the pac_ file unconditionally
+    and the fetch has to match it, or a Binance bar lands in a pac_ file and
+    quietly poisons the cache the operator rules read.
     """
-    bsym = futures_symbol(sym)
-    path = _cache_path(sym, bsym)
+    path = _cache_path(sym, "")
     old = _read_cache(path)
-    if bsym:
-        fresh = _binance_fut_bars(bsym)
-    else:
-        from .api_client import PacificaClient
-        fresh = _pacifica_bars(PacificaClient(base_url), sym)
+    from .api_client import PacificaClient
+    fresh = _pacifica_bars(PacificaClient(base_url), sym)
     if not fresh and not old:
         return [], "bars 0"
     b = _merge_bars(old, fresh) if old else fresh
