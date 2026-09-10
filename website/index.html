@@ -1288,6 +1288,48 @@ OKX_API_PASSPHRASE=...</code></pre>
       regimes, not forecasts.</p>
 
     <div class="upd-list">
+        <a class="upd-row" href="#u-one-book" data-date="2026-09-10">
+          <span class="d">SEP 10</span>
+          <span class="t">0.4.73: The board is ranked on the book the order goes to</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
+        <a class="upd-row" href="#u-alerts-fold" data-date="2026-09-09">
+          <span class="d">SEP 9</span>
+          <span class="t">0.4.72: Repeat alerts fold into one</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
+        <a class="upd-row" href="#u-close-restore" data-date="2026-09-07">
+          <span class="d">SEP 7</span>
+          <span class="t">0.4.71: A close that fails puts the stop back</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
+        <a class="upd-row" href="#u-board-thread" data-date="2026-09-05">
+          <span class="d">SEP 5</span>
+          <span class="t">0.4.70: The board builds without stopping the loop</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
+        <a class="upd-row" href="#u-check-english" data-date="2026-09-04">
+          <span class="d">SEP 4</span>
+          <span class="t">0.4.69: The setup check is in English</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
+        <a class="upd-row" href="#u-empty-board" data-date="2026-09-03">
+          <span class="d">SEP 3</span>
+          <span class="t">0.4.68: An empty board is an answer</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
+        <a class="upd-row" href="#u-stop-at-venue" data-date="2026-09-03">
+          <span class="d">SEP 3</span>
+          <span class="t">0.4.67: The stop rests at the exchange</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
         <a class="upd-row" href="#u-operator-rules" data-date="2026-08-31">
           <span class="d">AUG 31</span>
           <span class="t">0.4.66: A rules file of your own, if you want one</span>
@@ -1420,6 +1462,76 @@ OKX_API_PASSPHRASE=...</code></pre>
             full: the hourly picks, the Print judgments, the bot in eleven
             languages, and the free local model that answers without an API
             key.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-one-book">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 10</div>
+    <h2>0.4.73: The board is ranked on the book the order goes to</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-10</span></div>
+    <div class="upd-article">
+          <p class="lede">Coins were ranked on bars from a different exchange than the one they trade on. Every bar on the trading path now comes from one venue.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-alerts-fold">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 9</div>
+    <h2>0.4.72: Repeat alerts fold into one</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-09</span></div>
+    <div class="upd-article">
+          <p class="lede">An alert that fires on a loop is sent once with a count instead of every few seconds. The setup check no longer fails someone who runs the bot without Claude, and the licence is named correctly.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-close-restore">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 7</div>
+    <h2>0.4.71: A close that fails puts the stop back</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-07</span></div>
+    <div class="upd-article">
+          <p class="lede">A failed close used to leave the position with no stop behind it. The loop also survives an unexpected error instead of ending on it.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-board-thread">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 5</div>
+    <h2>0.4.70: The board builds without stopping the loop</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-05</span></div>
+    <div class="upd-article">
+          <p class="lede">Building the board took minutes and nothing else ran while it did. It now builds on its own thread.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-check-english">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 4</div>
+    <h2>0.4.69: The setup check is in English</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-04</span></div>
+    <div class="upd-article">
+          <p class="lede">Its output is read by the person who ran it, not by Claude, and it had been in Korean.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-empty-board">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 3</div>
+    <h2>0.4.68: An empty board is an answer</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-03</span></div>
+    <div class="upd-article">
+          <p class="lede">An empty board used to read as a broken file, and the bot went back to an older one. The installer also stopped printing chat phrases where a shell prompt is.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-stop-at-venue">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 3</div>
+    <h2>0.4.67: The stop rests at the exchange</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-03</span></div>
+    <div class="upd-article">
+          <p class="lede">The line that closes a losing trade is held by the exchange, so it does not need the bot awake.</p>
     </div>
   </section>
 
