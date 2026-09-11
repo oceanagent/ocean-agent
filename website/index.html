@@ -711,7 +711,7 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
       <div class="istep">
         <div class="ihead">Add to your client's MCP config (needs <a href="https://docs.astral.sh/uv/">uv</a>)</div>
         <div class="iwrap gated"><pre><code>{ "mcpServers": { "ocean-agent": {
-    "command": "uvx", "args": ["ocean-agent@0.4.73"],
+    "command": "uvx", "args": ["ocean-agent@0.4.74"],
     "env": { "PACIFICA_ENV_FILE": "/absolute/path/to/.env" } } } }</code></pre><button class="cbtn" onclick="copyCode(this)">Copy</button></div>
         <p class="body" style="margin-top:8px">The pinned version is the one the installers on this page use, so every client runs the exact build that was tested. When a newer release lands, a running session tells you once in chat and you change the number here to move. Your local data and keys are never touched by updates.</p>
       </div>
@@ -1288,9 +1288,15 @@ OKX_API_PASSPHRASE=...</code></pre>
       regimes, not forecasts.</p>
 
     <div class="upd-list">
+        <a class="upd-row" href="#u-let-seat-go" data-date="2026-09-11">
+          <span class="d">SEP 11</span>
+          <span class="t">0.4.74: A rules file can let a held seat go</span>
+          <span class="tg feat">feature</span>
+          <span class="chev">&#8250;</span>
+        </a>
         <a class="upd-row" href="#u-one-book" data-date="2026-09-10">
           <span class="d">SEP 10</span>
-          <span class="t">0.4.73: The board is ranked on the book the order goes to</span>
+          <span class="t">0.4.74: The board is ranked on the book the order goes to</span>
           <span class="tg fix">fix</span>
           <span class="chev">&#8250;</span>
         </a>
@@ -1465,10 +1471,20 @@ OKX_API_PASSPHRASE=...</code></pre>
     </div>
   </section>
 
+  <section class="page" id="u-let-seat-go">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 11</div>
+    <h2>0.4.74: A rules file can let a held seat go</h2>
+    <div class="upd-meta"><span class="tg feat">feature</span><span class="st">2026-09-11</span></div>
+    <div class="upd-article">
+          <p class="lede">Your own rules file could choose what to open and which way. It can now also ask for a position already open to be closed. It can only ask for a close, never an open, and it is off unless you write the hook.</p>
+    </div>
+  </section>
+
   <section class="page" id="u-one-book">
     <a class="upd-back" href="#updates">&#8249; All updates</a>
     <div class="eyebrow">Updates &middot; SEP 10</div>
-    <h2>0.4.73: The board is ranked on the book the order goes to</h2>
+    <h2>0.4.74: The board is ranked on the book the order goes to</h2>
     <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-10</span></div>
     <div class="upd-article">
           <p class="lede">Coins were ranked on bars from a different exchange than the one they trade on. Every bar on the trading path now comes from one venue.</p>
@@ -1882,13 +1898,13 @@ OKX_API_PASSPHRASE=...</code></pre>
             it with Claude, and keeps it updated.</p>
 
           <p>Until now the only way to run it was to clone the repository. It now ships on PyPI
-            as <b>ocean-agent</b>, currently at version 0.4.73. Install with the one line
+            as <b>ocean-agent</b>, currently at version 0.4.74. Install with the one line
             installer on this site, which sets up uv, Python, your keys and Claude&#39;s MCP
             config in a single paste, or with <b>pip install ocean-agent</b> if you already have
             a Python environment.</p>
 
           <div class="upd-stats">
-            <div><b>0.4.73</b><span>current version</span></div>
+            <div><b>0.4.74</b><span>current version</span></div>
             <div><b>7,400+</b><span>measured combinations bundled</span></div>
             <div><b>9 years</b><span>of walk forward data shipped</span></div>
             <div><b>100</b><span>markets scanned</span></div>

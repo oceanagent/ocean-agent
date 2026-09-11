@@ -182,7 +182,7 @@ separate keys: `ADDRESS_TESTNET`, `PACIFICA_API_KEY_TESTNET`).
   "mcpServers": {
     "ocean-agent": {
       "command": "uvx",
-      "args": ["ocean-agent@0.4.73"],
+      "args": ["ocean-agent@0.4.74"],
       "env": { "PACIFICA_ENV_FILE": "/absolute/path/to/.env" }
     }
   }
