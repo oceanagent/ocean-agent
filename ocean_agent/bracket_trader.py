@@ -2715,6 +2715,25 @@ def cycle(client, policy, st, cfg, dry: bool) -> None:
         if not dry:
             save_state(st)
         return
+    # Before anything looks at the held seats, the operator's rules get a
+    # say on letting one go. The hook answers a reason string or None per
+    # seat; a reason marks it the way an eviction does and the early-cut
+    # machinery takes it from there. It can only ask for a close, never an
+    # open, so a broken rules file costs nothing but a log line. Dry runs
+    # only read, the way the dir_cap eviction already does.
+    if (_op_rules is not None and not dry
+            and hasattr(_op_rules, "close_now")):
+        for _s, _p in list(st["positions"].items()):
+            if _p.get("evict_req") or _p.get("early_cut"):
+                continue
+            try:
+                _why = _op_rules.close_now(_s, dict(_p))
+            except Exception as e:                      # noqa: BLE001
+                log(f"운영자 규칙 close_now 실패({e!r}) — 자리는 그대로")
+                break
+            if _why:
+                _p["evict_req"] = "op_close"
+                log(f"{_s}: 운영자 규칙이 자리를 접으라 합니다 ({_why})")
     held_before = len(st["positions"])
     watch_positions(client, policy, st, cfg, dry)
     circuit_breakers(st, cfg)
