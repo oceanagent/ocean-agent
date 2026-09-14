@@ -737,6 +737,29 @@ def _is_strategy(rec: dict) -> bool:
     return "추정" not in c
 
 
+def _drop_seat(st: dict, sym: str) -> None:
+    """Free a seat and let go of this name's entry anchor with it.
+
+    The anchor exists so that retries of an UNFILLED order wait at one
+    price instead of chasing the book (audit 0.4.53). It is keyed by seal,
+    and a seal stays open for six hours refilling seats as they free, so a
+    name that has already been in and out was re-entering on an anchor from
+    hours earlier. On 09-14 LIT stopped out at 12:31 and re-entered twice
+    on the 12:11 anchor of 4.5024 while the market was at 4.63: a sell
+    limit under the book fills instantly as a taker, and the bracket built
+    from that stale price put the fill past its own stop, so both trades
+    were market-closed the second they opened.
+
+    A round trip is a finished trade. The next entry in the same name is a
+    new one and re-anchors at the current mark. Unfilled retries keep the
+    behaviour they were given.
+    """
+    st.get("positions", {}).pop(sym, None)
+    anchors = st.get("entry_anchor") or {}
+    for k in [k for k in anchors if k.endswith("|" + sym)]:
+        anchors.pop(k, None)
+
+
 def _close_row(sym: str, pos: dict, est, cause: str) -> dict:
     """One shape for every booked close, carrying its own geometry.
 
@@ -1609,10 +1632,20 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
                     # deliberately conservative estimate in the same
                     # percent-of-notional units every other closed record
                     # uses. (review N3)
+                    # The row carries the bracket it actually wore.
+                    # Before 09-14 it was built from the pick alone, so
+                    # entry_fill/tp/sl came out None and the two LIT rows
+                    # of that day could not be scored afterwards at all.
                     st["closed"].append(_close_row(
                         sym, {**p, "dir": direction,
+                              "entry_fill": fill, "entry_intent": px,
+                              "tp": float(tp_s), "sl": float(sl_s),
+                              "amount": amount, "leverage": lev,
+                              "pred_input": (p.get("pred_input")
+                                             or PRED_INPUT_TAG),
                               "opened_at": _now().isoformat()},
                         -0.16, "역전 즉시청산"))
+                    _drop_seat(st, sym)      # anchor goes too (09-14)
                     _clear_pending(st, sym)     # round trip fully booked (H9)
                     save_state(st)
                     continue        # opened and closed, booked above
@@ -2187,7 +2220,7 @@ def watch_positions(client, policy, st, cfg, dry: bool) -> None:
             # A stop chase leaves the same kind of leftover as an expiry
             # limit, so both come off here. (08-27)
             _cancel_resting(client, sym, pos)
-            del st["positions"][sym]
+            _drop_seat(st, sym)
             save_state(st)
             notify.send(f"브래킷 청산: {sym} {est:+.2f}% ({cause})")
             continue
@@ -2225,7 +2258,7 @@ def watch_positions(client, policy, st, cfg, dry: bool) -> None:
                             _close_row(sym, pos, move,
                                        "역전 즉시청산"
                                        + (":" + tag if tag else "")))
-                        del st["positions"][sym]
+                        _drop_seat(st, sym)
                         save_state(st)
                         notify.send(msg)
                         continue
@@ -2387,7 +2420,7 @@ def watch_positions(client, policy, st, cfg, dry: bool) -> None:
                 st["closed"].append(
                     _close_row(sym, pos, move,
                                why + (":" + tag if tag else "")))
-                del st["positions"][sym]
+                _drop_seat(st, sym)
                 save_state(st)
                 notify.send(f"브래킷 {why} 청산: {sym} {move:+.2f}%")
             except PacificaError as e:
@@ -3580,7 +3613,7 @@ def main():
                 row["basis"] = ("--close-all 전량 청산 "
                                 "(손익은 거래소 이력에서 확인)")
                 st["closed"].append(row)
-                del st["positions"][sym]
+                _drop_seat(st, sym)
                 log(f"청산: {sym}")
             except PacificaError as e:
                 failed.append(sym)
