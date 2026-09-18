@@ -629,7 +629,8 @@ def select_picks(rec: dict, cfg: dict) -> list[dict]:
 
 
 def bracket_prices(px: float, direction: str, mv: float, cfg: dict,
-                   tick: float) -> tuple[str, str] | None:
+                   tick: float, geom: dict | None = None
+                   ) -> tuple[str, str] | None:
     """Tick-rounded TP/SL, validated to sit on the correct sides of entry.
 
     With a tight target and a coarse tick, rounding can collapse the TP
@@ -648,7 +649,13 @@ def bracket_prices(px: float, direction: str, mv: float, cfg: dict,
     was actually paid. Do not "fix" this by copying seal prices.
     """
     long_ = direction == "long"
-    tp_d = tp_distance_pct(cfg, mv * 100) / 100
+    # 09-18: 운영자 규칙이 이 자리의 기하를 따로 지시할 수 있다. 기울기가
+    # 서 있는 구간은 흐름이 24시간에 걸쳐 나오므로 선을 멀리 두고 트레일로
+    # 지킨다. 지시가 없으면 아래 기본 계산 그대로다.
+    if geom and float(geom.get("tp_pct") or 0) > 0:
+        tp_d = float(geom["tp_pct"]) / 100
+    else:
+        tp_d = tp_distance_pct(cfg, mv * 100) / 100
     tp = px * (1 + tp_d) if long_ else px * (1 - tp_d)
     # The stop IS the cut, and the exchange holds it. 09-02 user decision.
     #
@@ -668,6 +675,9 @@ def bracket_prices(px: float, direction: str, mv: float, cfg: dict,
     # requested-close path and any position opened before this change.
     _cut = float(cfg.get("early_cut_pct", 0) or 0) / 100.0
     _sl_d = _cut if _cut > 0 else cfg["sl_mult"] * mv
+    if geom and float(geom.get("sl_pct") or 0) > 0:
+        # 재난선이다. 트레일이 항상 먼저 닿으므로 봇이 죽었을 때만 쓴다.
+        _sl_d = float(geom["sl_pct"]) / 100
     sl = px * (1 - _sl_d) if long_ else px * (1 + _sl_d)
     tp_s, sl_s = _round_to_tick(tp, tick), _round_to_tick(sl, tick)
     tp_f, sl_f = float(tp_s), float(sl_s)
@@ -1414,7 +1424,8 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
             continue
         mv = p["exp_move_pct"] / 100
         long_ = direction == "long"
-        pr = bracket_prices(px, direction, mv, cfg, tick)
+        _geom = p.get("geom") or None
+        pr = bracket_prices(px, direction, mv, cfg, tick, _geom)
         if pr is None:
             notify.send(f"브래킷 스킵 {sym}: 익절/손절가가 틱 반올림 후 "
                         f"진입가와 어긋남 (틱 {tick}, 변동폭 {mv:.4f})")
@@ -1457,6 +1468,7 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
                 "sym": sym, "dir": direction, "amount": amount,
                 "touch_dir": touch_dir, "side_source": seat_src,
                 "entry_intent": px, "tp": float(tp_s), "sl": float(sl_s),
+                "trail_pct": float((_geom or {}).get("trail_pct") or 0),
                 "exp_move_pct": p["exp_move_pct"], "leverage": lev,
                 # which statistic sized this trade, so the 09-01 switchover
                 # can be graded later rather than argued about. The SEAL's
@@ -1657,6 +1669,7 @@ def enter_positions(client, policy, st, cfg, dry: bool) -> None:
                     # watch_positions force-closes on either line breach
             st["positions"][sym] = {
                 "dir": direction, "amount": amount, "entry_intent": px,
+                "trail_pct": float((_geom or {}).get("trail_pct") or 0),
                 "entry_fill": fill, "fill_confirmed": confirmed,
                 "tp": float(tp_s), "sl": float(sl_s),
                 "exp_move_pct": p["exp_move_pct"], "leverage": lev,
@@ -2299,6 +2312,32 @@ def watch_positions(client, policy, st, cfg, dry: bool) -> None:
         # concedes the spread and this does not. What is not yet known is
         # whether it truly fills as a maker; nothing has run live.
         # (08-28 user decision)
+        # 09-18: 트레일링. 기울기가 서 있을 때 잡은 자리만 trail_pct 를
+        # 갖는다. 파시피카 API 에 트레일링 주문이 없어(화면에만 있다) 봇이
+        # 직접 든다. 최고가를 기록해 두고 거기서 trail_pct 만큼 되돌리면
+        # 자리를 접으라고 표시한다. 접는 길은 아래 것 그대로다 (마크에
+        # 지정가를 붙여 따라간다). 거래소 손절 8%는 재난선이라 그대로 둔다.
+        #
+        # 트레일이 지금 기하보다 낫고, 손절을 그냥 넓히는 것보다 최악의
+        # 날이 작다. 이익이 나면 선이 같이 올라가기 때문이다.
+        _trail = float(pos.get("trail_pct") or 0)
+        if (_trail > 0 and mark > 0 and entry > 0
+                and not hit_tp and not hit_sl and not pos.get("evict_req")):
+            _best = float(pos.get("trail_best") or entry)
+            _new = max(_best, mark) if long_ else min(_best, mark)
+            if _new != _best:
+                pos["trail_best"] = _new
+                _best = _new
+            _line = (_best * (1 - _trail / 100) if long_
+                     else _best * (1 + _trail / 100))
+            if (mark <= _line) if long_ else (mark >= _line):
+                pos["evict_req"] = "trail"
+                _peak = (_best / entry - 1) * 100 * (1 if long_ else -1)
+                log(f"{sym}: 트레일 {_trail:.1f}% 에 닿았다 "
+                    f"(최고 {_best} · 진입 대비 {_peak:+.2f}% · 지금 {mark}). "
+                    f"마크에 지정가를 걸고 따라간다")
+                save_state(st)
+
         # a position marked for requested close: close at the mark and
         # follow, the early-cut machinery with its own words
         if pos.get("evict_req") and mark > 0 and not hit_tp and not hit_sl:
