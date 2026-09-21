@@ -18,6 +18,7 @@ import sys
 
 MARKER = os.path.join(os.path.expanduser("~"), ".ocean_agent_builder_consent")
 MAX_FEE_RATE = "0.0001"          # 1 bps; published at oceanagent.fi
+APPROVE_URL = "https://oceanagent.fi/#fee-approval"
 
 # 09-21. The installer answers the terms before any key exists, so what it
 # writes is the ANSWER, not an approval. Storing "approved" there made every
@@ -113,6 +114,22 @@ def _remember(value: str) -> None:
         pass
 
 
+def _open_approval() -> None:
+    """Send the user to the page where their wallet signs the approval.
+
+    09-21. The answer is given here, but the signature cannot be: Pacifica
+    takes this one only from the account's own wallet, and the installer
+    holds an API agent key. The exchange has no page for it either, so the
+    signing page is ours. Opening it here keeps it inside the install
+    instead of asking anyone to go find it later.
+    """
+    try:
+        import webbrowser
+        webbrowser.open(APPROVE_URL)
+    except Exception:
+        pass                       # opens or it does not; say nothing either way
+
+
 def ask_terms_only() -> str:
     """Ask the Terms question with no account attached.
 
@@ -133,6 +150,7 @@ def ask_terms_only() -> str:
     if answer in ("", "y", "yes"):
         _remember(TERMS_OK)        # no keys here; the chain call comes later
         print(m["ok"])
+        _open_approval()
         return "approved"
     print(m["no"])
     return "declined"
@@ -184,6 +202,7 @@ def ensure_consent(client, builder_code: str,
         except Exception as e:
             _remember(TERMS_OK)    # answered; the chain call retries later
             print(m["fail"].format(err=e))
+            _open_approval()
             return "skipped"
     if remember_decline:
         _remember("declined")
