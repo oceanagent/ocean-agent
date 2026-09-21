@@ -1672,8 +1672,8 @@ def _terms_notice() -> str:
     try:
         if _TERMS_STATE["asked"]:
             return ""
-        from .builder_consent import _marker
-        if _marker() in ("approved", "declined"):
+        from .builder_consent import _marker, TERMS_OK
+        if _marker() in ("approved", TERMS_OK, "declined"):
             _TERMS_STATE["asked"] = True
             return ""
         _TERMS_STATE["asked"] = True
@@ -1803,7 +1803,7 @@ def accept_terms(confirm: bool) -> str:
     the user has explicitly answered in chat. confirm=true records acceptance
     (which approves the builder code from the Terms with the user's key);
     confirm=false records the decline. Either answer is asked only once."""
-    from .builder_consent import MAX_FEE_RATE, _remember
+    from .builder_consent import MAX_FEE_RATE, TERMS_OK, _remember
     if not confirm:
         _remember("declined")
         return ("Recorded: terms declined. Everything keeps working the "
@@ -1813,8 +1813,11 @@ def accept_terms(confirm: bool) -> str:
         _remember("approved")
         return "Recorded: terms accepted. Thank you!"
     except Exception as e:
-        # do not mark, so a later session can try again
-        return f"Could not record the acceptance ({e}). Nothing changed."
+        # The answer stands, so stop asking. Only the chain call failed, and
+        # ensure_consent retries it on every run (09-21).
+        _remember(TERMS_OK)
+        return (f"Recorded: terms accepted. The on-chain approval did not go "
+                f"through this time ({e}); it retries by itself later.")
 
 
 def _wrap_tools_with_update_notice() -> None:

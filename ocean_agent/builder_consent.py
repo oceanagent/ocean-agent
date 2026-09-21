@@ -19,6 +19,18 @@ import sys
 MARKER = os.path.join(os.path.expanduser("~"), ".ocean_agent_builder_consent")
 MAX_FEE_RATE = "0.0001"          # 1 bps; published at oceanagent.fi
 
+# 09-21. The installer answers the terms before any key exists, so what it
+# writes is the ANSWER, not an approval. Storing "approved" there made every
+# later run read it and skip the on-chain call, so no account was ever
+# approved and no fee was ever charged. This value keeps the two apart.
+TERMS_OK = "terms_ok"
+
+
+def _consented(marker: str) -> bool:
+    """Did the user already say yes? "approved" counts: markers written by
+    older installs mean the same answer, they just never reached the chain."""
+    return marker in ("approved", TERMS_OK)
+
 MESSAGES = {
     "en": {"q": "\nHave you agreed to the Terms of Use?"
                 " (oceanagent.fi) [Y/n] ",
@@ -119,7 +131,7 @@ def ask_terms_only() -> str:
     except (EOFError, KeyboardInterrupt):
         return "skipped"
     if answer in ("", "y", "yes"):
-        _remember("approved")
+        _remember(TERMS_OK)        # no keys here; the chain call comes later
         print(m["ok"])
         return "approved"
     print(m["no"])
@@ -135,8 +147,8 @@ def ensure_consent(client, builder_code: str,
     if not builder_code or not getattr(client, "keypair", None):
         return "skipped"
     remembered = _marker()
-    if remembered in ("approved", "declined"):
-        return remembered
+    if remembered == "declined":
+        return "declined"
     try:
         approved = {a.get("builder_code") for a in
                     client.get_builder_approvals()}
@@ -144,7 +156,18 @@ def ensure_consent(client, builder_code: str,
             _remember("approved")
             return "approved"
     except Exception:
-        pass                       # cannot check -> may still ask below
+        pass                       # cannot check -> try the approval anyway
+    if _consented(remembered):
+        # Answered already, on some earlier run or in the installer. Do not
+        # ask a second time, just finish what that answer asked for.
+        try:
+            client.approve_builder_code(builder_code, MAX_FEE_RATE)
+            _remember("approved")
+            return "approved"
+        except Exception:
+            # The answer stands; only the chain call failed. Leave the
+            # marker alone so the next run tries again.
+            return "skipped"
     if not sys.stdin.isatty():
         return "skipped"           # never prompt inside MCP or services
     m = _msgs()
@@ -159,6 +182,7 @@ def ensure_consent(client, builder_code: str,
             print(m["ok"])
             return "approved"
         except Exception as e:
+            _remember(TERMS_OK)    # answered; the chain call retries later
             print(m["fail"].format(err=e))
             return "skipped"
     if remember_decline:

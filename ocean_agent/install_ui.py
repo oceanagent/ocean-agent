@@ -260,7 +260,9 @@ class _H(BaseHTTPRequestHandler):
             return
         if u.path == "/terms":
             answer = (form.get("answer") or [""])[0]
-            s["terms"] = "approved" if answer == "yes" else "declined"
+            # 09-21: record the answer, not an approval. No key exists at
+            # this point, so the on-chain call happens on the first run.
+            s["terms"] = "terms_ok" if answer == "yes" else "declined"
             _write_consent(s["terms"])
             s["stage"] = "install" if answer == "yes" else "declined"
             self.send_response(303)
