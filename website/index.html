@@ -444,6 +444,7 @@
         <div class="dropdown">
           <a href="#installation"><b>Install</b><span>desktop · one command</span></a>
           <a href="#mobile"><b>Mobile</b><span>Telegram bot · phone</span></a>
+          <a href="#fee-approval"><b>Developer fee</b><span>approve &middot; one signature</span></a>
         </div>
       </div>
       <div class="navgroup">
@@ -720,6 +721,33 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
         <div class="iwrap gated"><pre><code>uv run --with ocean-agent python -m ocean_agent.doctor</code></pre><button class="cbtn" onclick="copyCode(this)">Copy</button></div>
       </div>
     </details>
+  </section>
+
+  <section class="page" id="fee-approval">
+    <div class="eyebrow">Install &middot; Developer fee</div>
+    <h2>Approve the 0.01% developer fee</h2>
+    <p class="sec-lede">One signature from your own wallet. Optional, revocable, and nothing about the bot changes if you skip it.</p>
+    <p>The installer asks whether you accept the Terms. That answer is recorded on your machine, but the fee itself is charged by the exchange, and only your wallet can authorize that. This page is where that signature happens. Your keys never leave your wallet, and the Software never sees them.</p>
+    <div class="tbl-wrap">
+      <table class="dtable">
+        <thead><tr><th>Field</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><th>Builder code</th><td><code>mustache</code></td></tr>
+          <tr><th>Fee</th><td>0.01% (1 bps) of each filled order's notional</td></tr>
+          <tr><th>Cap you sign</th><td><code>0.0001</code>. The exchange rejects any order whose fee would exceed it.</td></tr>
+          <tr><th>Revoke</th><td>Any time, from your Pacifica account.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ba-box">
+      <div class="ba-row">
+        <button class="btn btn-primary" id="baConnect" type="button">Connect wallet</button>
+        <button class="btn btn-primary" id="baApprove" type="button" hidden>Approve 0.01%</button>
+        <button class="btn btn-ghost" id="baCheck" type="button" hidden>Check status</button>
+      </div>
+      <p class="ba-msg" id="baMsg">Phantom, Solflare or Backpack. Use the same wallet your agent key belongs to.</p>
+    </div>
+    <p class="fine">Declining changes nothing. The bot trades the same either way, and you can come back here later.</p>
   </section>
 
   <section class="page" id="mobile">
@@ -2669,6 +2697,131 @@ OKX_API_PASSPHRASE=...</code></pre>
     }
     render(0);
   })();
+</script>
+
+<style>
+.ba-box{border:1px solid var(--line,#2a2a2a);border-radius:12px;padding:20px;margin:18px 0}
+.ba-row{display:flex;gap:10px;flex-wrap:wrap}
+.ba-msg{margin:14px 0 0;font-size:14px;line-height:1.6;opacity:.85}
+.ba-msg.ok{color:#3fb950}.ba-msg.bad{color:#f85149}
+.ba-box button[disabled]{opacity:.5;cursor:default}
+@media(max-width:640px){.ba-row{flex-direction:column}.ba-row .btn{width:100%}}
+</style>
+<script>
+(function () {
+  var BUILDER = "mustache", RATE = "0.0001";
+  var API = "https://api.pacifica.fi/api/v1";
+  var A = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  function b58(bytes) {
+    if (!bytes || !bytes.length) return "";
+    var d = [0], i, j, c;
+    for (i = 0; i < bytes.length; i++) {
+      c = bytes[i];
+      for (j = 0; j < d.length; j++) { c += d[j] << 8; d[j] = c % 58; c = (c / 58) | 0; }
+      while (c > 0) { d.push(c % 58); c = (c / 58) | 0; }
+    }
+    var out = "";
+    for (i = 0; bytes[i] === 0 && i < bytes.length - 1; i++) out += A[0];
+    for (i = d.length - 1; i >= 0; i--) out += A[d[i]];
+    return out;
+  }
+  // Same canonical form the bot signs with: recursively key sorted, compact.
+  function sortKeys(v) {
+    if (Array.isArray(v)) return v.map(sortKeys);
+    if (v && typeof v === "object") {
+      var o = {}, k = Object.keys(v).sort();
+      for (var i = 0; i < k.length; i++) o[k[i]] = sortKeys(v[k[i]]);
+      return o;
+    }
+    return v;
+  }
+  var el = function (id) { return document.getElementById(id); };
+  var msg = el("baMsg"), bConn = el("baConnect"), bApp = el("baApprove"),
+      bChk = el("baCheck"), addr = null;
+  if (!msg) return;
+  function say(t, kind) {
+    msg.textContent = t;
+    msg.className = "ba-msg" + (kind ? " " + kind : "");
+  }
+  function wallet() {
+    var w = window.phantom && window.phantom.solana;
+    return w || window.solana || window.solflare || window.backpack || null;
+  }
+  function busy(on) {
+    [bConn, bApp, bChk].forEach(function (b) { if (b) b.disabled = on; });
+  }
+  async function approved() {
+    var r = await fetch(API + "/account/builder_codes/approvals?account=" + addr);
+    var j = await r.json();
+    var list = (j && j.data) || [];
+    return list.some(function (x) { return x && x.builder_code === BUILDER; });
+  }
+  bConn.addEventListener("click", async function () {
+    var w = wallet();
+    if (!w) {
+      say("No Solana wallet found. Install Phantom, Solflare or Backpack and reload.", "bad");
+      return;
+    }
+    busy(true);
+    try {
+      var res = await w.connect();
+      addr = String((res && res.publicKey) || w.publicKey);
+      bConn.hidden = true; bApp.hidden = false; bChk.hidden = false;
+      say(await approved()
+        ? "Already approved for " + addr + ". Nothing to do."
+        : "Connected as " + addr + ". Not approved yet.",
+        await approved() ? "ok" : null);
+    } catch (e) {
+      say("Wallet did not connect: " + (e && e.message ? e.message : e), "bad");
+    } finally { busy(false); }
+  });
+  bChk.addEventListener("click", async function () {
+    busy(true);
+    try {
+      say(await approved() ? "Approved. The fee is active on this account."
+                           : "Not approved on this account.",
+          await approved() ? "ok" : null);
+    } catch (e) {
+      say("Could not check: " + (e && e.message ? e.message : e), "bad");
+    } finally { busy(false); }
+  });
+  bApp.addEventListener("click", async function () {
+    var w = wallet();
+    if (!w || !addr) { say("Connect a wallet first.", "bad"); return; }
+    busy(true);
+    try {
+      var ts = Date.now(), win = 5000;
+      var data = { builder_code: BUILDER, max_fee_rate: RATE };
+      var text = JSON.stringify(sortKeys({
+        timestamp: ts, expiry_window: win,
+        type: "approve_builder_code", data: data
+      }));
+      var signed = await w.signMessage(new TextEncoder().encode(text), "utf8");
+      var sig = signed && signed.signature ? signed.signature : signed;
+      var r = await fetch(API + "/account/builder_codes/approve", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account: addr, agent_wallet: null, signature: b58(new Uint8Array(sig)),
+          timestamp: ts, expiry_window: win,
+          builder_code: BUILDER, max_fee_rate: RATE
+        })
+      });
+      var j = await r.json().catch(function () { return null; });
+      if (r.ok && j && j.success) {
+        say("Approved. Thank you. You can revoke it any time in your Pacifica account.", "ok");
+        bApp.hidden = true;
+      } else {
+        say("The exchange refused it: "
+            + ((j && (j.error || j.message)) || ("HTTP " + r.status)), "bad");
+      }
+    } catch (e) {
+      var m = e && e.message ? e.message : String(e);
+      say(/reject|denied|cancel/i.test(m)
+        ? "Cancelled in the wallet. Nothing was approved."
+        : "Could not approve: " + m, "bad");
+    } finally { busy(false); }
+  });
+})();
 </script>
 
 </body>
