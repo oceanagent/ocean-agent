@@ -81,12 +81,90 @@ button.go { width:100%; margin-top:20px; padding:13px; border:0;
   border-radius:10px; font-weight:500; font-size:14px;
   cursor:pointer; }
 .pick input { width:auto; }
+.fee { border:1px solid var(--line); border-radius:12px; padding:14px;
+  margin:14px 0; }
+.fee .frow { display:flex; gap:8px; flex-wrap:wrap; }
+.fee button { padding:10px 16px; border-radius:10px; cursor:pointer;
+  border:1px solid var(--line); background:#fff; font:inherit; }
+.fee button.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+.fee button[disabled] { opacity:.5; cursor:default; }
+.fee .fmsg { margin-top:10px; font-size:14px; color:var(--sub); }
+.fee .fmsg.ok { color:var(--ok); } .fee .fmsg.bad { color:var(--bad); }
 button.no { width:100%; margin-top:10px; padding:12px; border:1px solid var(--line);
   border-radius:10px; background:var(--card); color:var(--sub); font-size:14px;
   cursor:pointer; }
 .bad { color:var(--bad); } .big { font-size:38px; text-align:center; }
 </style></head><body><div class="card">{body}</div>
 </body></html>"""
+
+
+# The developer fee needs a signature from the account's own wallet.
+# Pacifica accepts it from nothing else, and has no page for it, so the
+# only place it can happen is a browser holding that wallet. This is one,
+# and the user is already standing in it with the wallet connected to get
+# their key, so the signature costs them one click instead of a trip.
+# The canonical message matches ocean_agent/signing.py byte for byte.
+_FEE_BLOCK = """
+<div class='fee'>
+  <b>3.</b> Connect your wallet to fill the address above.
+  <div class='frow' style='margin-top:10px'>
+    <button type='button' id='fw' class='on'>Connect wallet</button>
+    <button type='button' id='fa' hidden>Sign</button>
+  </div>
+  <div class='fmsg' id='fm'></div>
+</div>
+<script>
+(function(){
+var CODE="mustache", RATE="0.0001", API="https://api.pacifica.fi/api/v1";
+var AL="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function b58(b){if(!b||!b.length)return"";var d=[0],i,j,c;
+ for(i=0;i<b.length;i++){c=b[i];
+  for(j=0;j<d.length;j++){c+=d[j]<<8;d[j]=c%58;c=(c/58)|0;}
+  while(c>0){d.push(c%58);c=(c/58)|0;}}
+ var o="";for(i=0;b[i]===0&&i<b.length-1;i++)o+=AL[0];
+ for(i=d.length-1;i>=0;i--)o+=AL[d[i]];return o;}
+function srt(v){if(Array.isArray(v))return v.map(srt);
+ if(v&&typeof v==="object"){var o={},k=Object.keys(v).sort();
+  for(var i=0;i<k.length;i++)o[k[i]]=srt(v[k[i]]);return o;}return v;}
+var W=function(){return (window.phantom&&window.phantom.solana)||
+ window.solana||window.solflare||window.backpack||null;};
+var fw=document.getElementById("fw"),fa=document.getElementById("fa"),
+    fm=document.getElementById("fm"),addr=null;
+function say(t,k){fm.textContent=t;fm.className="fmsg"+(k?" "+k:"");}
+async function has(){try{var r=await fetch(API+
+ "/account/builder_codes/approvals?account="+addr);var j=await r.json();
+ return ((j&&j.data)||[]).some(function(x){return x&&x.builder_code===CODE;});
+ }catch(e){return false;}}
+fw.onclick=async function(){var w=W();
+ if(!w){say("No Solana wallet in this browser. You can skip this.","bad");return;}
+ fw.disabled=true;
+ try{var r=await w.connect();addr=String((r&&r.publicKey)||w.publicKey);
+  var f=document.querySelector("input[name=address]");
+  if(f&&!f.value)f.value=addr;
+  if(await has()){say("Already approved. Nothing to do.","ok");fw.hidden=true;}
+  else{fw.hidden=true;fa.hidden=false;fa.className="on";say(addr);}
+ }catch(e){say("Wallet did not connect. You can skip this.","bad");}
+ finally{fw.disabled=false;}};
+fa.onclick=async function(){var w=W();if(!w||!addr)return;fa.disabled=true;
+ try{var ts=Date.now(),win=5000,data={builder_code:CODE,max_fee_rate:RATE};
+  var txt=JSON.stringify(srt({timestamp:ts,expiry_window:win,
+   type:"approve_builder_code",data:data}));
+  var sg=await w.signMessage(new TextEncoder().encode(txt),"utf8");
+  sg=sg&&sg.signature?sg.signature:sg;
+  var r=await fetch(API+"/account/builder_codes/approve",{method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({account:addr,agent_wallet:null,
+    signature:b58(new Uint8Array(sg)),timestamp:ts,expiry_window:win,
+    builder_code:CODE,max_fee_rate:RATE})});
+  var j=await r.json().catch(function(){return null;});
+  if(r.ok&&j&&j.success){say("Approved. Thank you.","ok");fa.hidden=true;}
+  else say(((j&&(j.error||j.message))||("HTTP "+r.status)),"bad");
+ }catch(e){var m=(e&&e.message)||String(e);
+  say(/reject|denied|cancel/i.test(m)?"Cancelled in the wallet.":m,"bad");}
+ finally{fa.disabled=false;}};
+})();
+</script>
+"""
 
 
 def _write_consent(value: str) -> None:
@@ -208,7 +286,10 @@ class _H(BaseHTTPRequestHandler):
                 "Telegram open <b>@BotFather</b>, send <b>/newbot</b>, "
                 "paste the token here. The bot starts by itself; you just "
                 "send it /start. Skippable, you can add it later.</div>"
-                
+                # The wallet is already in this browser, so the developer
+                # fee is signed here rather than on a page nobody visits.
+                # It also fills the address field, which saves a paste.
+                + _FEE_BLOCK + 
                 f"{s.get('err', '')}"
                 "<button class='go'>Connect</button></form>"
                 "<div class='note'>Saved only to a file on THIS computer and never "
