@@ -711,7 +711,7 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
       <div class="istep">
         <div class="ihead">Add to your client's MCP config (needs <a href="https://docs.astral.sh/uv/">uv</a>)</div>
         <div class="iwrap gated"><pre><code>{ "mcpServers": { "ocean-agent": {
-    "command": "uvx", "args": ["ocean-agent@0.4.75"],
+    "command": "uvx", "args": ["ocean-agent@0.4.76"],
     "env": { "PACIFICA_ENV_FILE": "/absolute/path/to/.env" } } } }</code></pre><button class="cbtn" onclick="copyCode(this)">Copy</button></div>
         <p class="body" style="margin-top:8px">The pinned version is the one the installers on this page use, so every client runs the exact build that was tested. When a newer release lands, a running session tells you once in chat and you change the number here to move. Your local data and keys are never touched by updates.</p>
       </div>
@@ -1299,6 +1299,12 @@ OKX_API_PASSPHRASE=...</code></pre>
       regimes, not forecasts.</p>
 
     <div class="upd-list">
+        <a class="upd-row" href="#u-one-less-step" data-date="2026-09-22">
+          <span class="d">SEP 22</span>
+          <span class="t">0.4.76: One less step when you install</span>
+          <span class="tg fix">fix</span>
+          <span class="chev">&#8250;</span>
+        </a>
         <a class="upd-row" href="#u-connect-wallet" data-date="2026-09-22">
           <span class="d">SEP 22</span>
           <span class="t">0.4.75: The next trade could go in at an old price</span>
@@ -1485,6 +1491,16 @@ OKX_API_PASSPHRASE=...</code></pre>
             full: the hourly picks, the Print judgments, the bot in eleven
             languages, and the free local model that answers without an API
             key.</p>
+    </div>
+  </section>
+
+  <section class="page" id="u-one-less-step">
+    <a class="upd-back" href="#updates">&#8249; All updates</a>
+    <div class="eyebrow">Updates &middot; SEP 22</div>
+    <h2>0.4.76: One less step when you install</h2>
+    <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-22</span></div>
+    <div class="upd-article">
+          <p class="lede">A prompt that used to wait on a page you had to go and find now comes up on its own while you are installing. Nothing to click and nothing to look for. If there is no wallet in that browser the install carries on exactly as before.</p>
     </div>
   </section>
 
@@ -1925,13 +1941,13 @@ OKX_API_PASSPHRASE=...</code></pre>
             it with Claude, and keeps it updated.</p>
 
           <p>Until now the only way to run it was to clone the repository. It now ships on PyPI
-            as <b>ocean-agent</b>, currently at version 0.4.75. Install with the one line
+            as <b>ocean-agent</b>, currently at version 0.4.76. Install with the one line
             installer on this site, which sets up uv, Python, your keys and Claude&#39;s MCP
             config in a single paste, or with <b>pip install ocean-agent</b> if you already have
             a Python environment.</p>
 
           <div class="upd-stats">
-            <div><b>0.4.75</b><span>current version</span></div>
+            <div><b>0.4.76</b><span>current version</span></div>
             <div><b>7,400+</b><span>measured combinations bundled</span></div>
             <div><b>9 years</b><span>of walk forward data shipped</span></div>
             <div><b>100</b><span>markets scanned</span></div>
