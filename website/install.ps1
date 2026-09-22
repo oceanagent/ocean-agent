@@ -426,6 +426,9 @@ if ($write) {
         Dim "The form could not open, so this window asks instead."
         $addr = Read-Host "  Wallet public address (ADDRESS)"
         try { Start-Process "https://app.pacifica.fi/apikey" } catch {}
+        # The wallet is awake at that moment, so ask for the fee approval in
+        # the same breath rather than sending them somewhere later.
+        try { Start-Process "https://oceanagent.fi/#connect-wallet" } catch {}
         $keySec = Read-Host "  Agent API key (input hidden)" -AsSecureString
         $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($keySec)
         $key  = [Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)

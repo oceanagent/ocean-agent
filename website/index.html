@@ -722,31 +722,17 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
     </details>
   </section>
 
-  <section class="page" id="fee-approval">
-    <div class="eyebrow">Install &middot; Developer fee</div>
-    <h2>Approve the 0.01% developer fee</h2>
-    <p class="sec-lede">One signature from your own wallet. Optional, revocable, and nothing about the bot changes if you skip it.</p>
-    <p>The installer asks whether you accept the Terms. That answer is recorded on your machine, but the fee itself is charged by the exchange, and only your wallet can authorize that. This page is where that signature happens. Your keys never leave your wallet, and the Software never sees them.</p>
-    <div class="tbl-wrap">
-      <table class="dtable">
-        <thead><tr><th>Field</th><th>Value</th></tr></thead>
-        <tbody>
-          <tr><th>Builder code</th><td><code>mustache</code></td></tr>
-          <tr><th>Fee</th><td>0.01% (1 bps) of each filled order's notional</td></tr>
-          <tr><th>Cap you sign</th><td><code>0.0001</code>. The exchange rejects any order whose fee would exceed it.</td></tr>
-          <tr><th>Revoke</th><td>Any time, from your Pacifica account.</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <section class="page" id="connect-wallet">
+    <div class="eyebrow">Install</div>
+    <h2>Ocean Agent Approve</h2>
     <div class="ba-box">
       <div class="ba-row">
         <button class="btn btn-primary" id="baConnect" type="button">Connect wallet</button>
-        <button class="btn btn-primary" id="baApprove" type="button" hidden>Approve 0.01%</button>
+        <button class="btn btn-primary" id="baApprove" type="button" hidden>Approve</button>
         <button class="btn btn-ghost" id="baCheck" type="button" hidden>Check status</button>
       </div>
-      <p class="ba-msg" id="baMsg">Phantom, Solflare or Backpack. Use the same wallet your agent key belongs to.</p>
+      <p class="ba-msg" id="baMsg"></p>
     </div>
-    <p class="fine">Declining changes nothing. The bot trades the same either way, and you can come back here later.</p>
   </section>
 
   <section class="page" id="mobile">
@@ -1315,7 +1301,7 @@ OKX_API_PASSPHRASE=...</code></pre>
       regimes, not forecasts.</p>
 
     <div class="upd-list">
-        <a class="upd-row" href="#u-fee-approval" data-date="2026-09-22">
+        <a class="upd-row" href="#u-connect-wallet" data-date="2026-09-22">
           <span class="d">SEP 22</span>
           <span class="t">0.4.75: The next trade could go in at an old price</span>
           <span class="tg fix">fix</span>
@@ -1504,7 +1490,7 @@ OKX_API_PASSPHRASE=...</code></pre>
     </div>
   </section>
 
-  <section class="page" id="u-fee-approval">
+  <section class="page" id="u-connect-wallet">
     <a class="upd-back" href="#updates">&#8249; All updates</a>
     <div class="eyebrow">Updates &middot; SEP 22</div>
     <h2>0.4.75: The next trade could go in at an old price</h2>

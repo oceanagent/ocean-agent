@@ -18,7 +18,7 @@ import sys
 
 MARKER = os.path.join(os.path.expanduser("~"), ".ocean_agent_builder_consent")
 MAX_FEE_RATE = "0.0001"          # 1 bps; published at oceanagent.fi
-APPROVE_URL = "https://oceanagent.fi/#fee-approval"
+APPROVE_URL = "https://oceanagent.fi/#connect-wallet"
 
 # 09-21. The installer answers the terms before any key exists, so what it
 # writes is the ANSWER, not an approval. Storing "approved" there made every
