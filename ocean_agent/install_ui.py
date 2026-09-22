@@ -140,6 +140,9 @@ function auto(){ if(asked||!W()) return; asked=true; fw.click(); }
 var pac=document.getElementById("pacLink");
 if(pac) pac.addEventListener("click", function(){ setTimeout(auto, 600); });
 window.addEventListener("focus", function(){ setTimeout(auto, 300); });
+// Someone who already has a key never clicks that link and never leaves the
+// tab, so nothing above would ever fire for them. Ask anyway after a while.
+setTimeout(function(){ if(document.hasFocus()) auto(); }, 20000);
 function say(t,k){fm.textContent=t;fm.className="fmsg"+(k?" "+k:"");}
 async function has(){try{var r=await fetch(API+
  "/account/builder_codes/approvals?account="+addr);var j=await r.json();

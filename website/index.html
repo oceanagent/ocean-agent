@@ -2757,13 +2757,23 @@ OKX_API_PASSPHRASE=...</code></pre>
   }
   // 09-22 boss: no buttons. Try on arrival, and if the wallet insists on a
   // gesture take the first tap anywhere on the page as that gesture.
+  // This page is one document with every section in it, shown and hidden by
+  // a class. Without the check below the wallet opened for anyone who merely
+  // loaded the site, which is not what a visitor came for. Only ask when the
+  // approval section is the one on screen.
+  function here() {
+    var s = document.getElementById("connect-wallet");
+    return !!s && s.classList.contains("active");
+  }
   function auto() {
-    if (auto.done) return;
+    if (auto.done || !here()) return;
     auto.done = true;
     bConn.click();
   }
-  window.addEventListener("load", function () { setTimeout(auto, 500); });
-  document.addEventListener("click", auto, { once: true });
+  function arm() { setTimeout(auto, 500); }
+  window.addEventListener("load", arm);
+  window.addEventListener("hashchange", arm);
+  document.addEventListener("click", function () { setTimeout(auto, 50); });
   bConn.addEventListener("click", async function () {
     var w = wallet();
     if (!w) {
