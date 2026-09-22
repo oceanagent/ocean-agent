@@ -1317,7 +1317,7 @@ OKX_API_PASSPHRASE=...</code></pre>
     <div class="upd-list">
         <a class="upd-row" href="#u-fee-approval" data-date="2026-09-22">
           <span class="d">SEP 22</span>
-          <span class="t">0.4.75: Sign the fee approval where you paste your key</span>
+          <span class="t">0.4.75: The fee approval was never going through</span>
           <span class="tg fix">fix</span>
           <span class="chev">&#8250;</span>
         </a>
@@ -1507,10 +1507,10 @@ OKX_API_PASSPHRASE=...</code></pre>
   <section class="page" id="u-fee-approval">
     <a class="upd-back" href="#updates">&#8249; All updates</a>
     <div class="eyebrow">Updates &middot; SEP 22</div>
-    <h2>0.4.75: Sign the fee approval where you paste your key</h2>
+    <h2>0.4.75: The fee approval was never going through</h2>
     <div class="upd-meta"><span class="tg fix">fix</span><span class="st">2026-09-22</span></div>
     <div class="upd-article">
-          <p class="lede">Connect your wallet and sign once on the same page where you paste your API key. It is one step at install now, instead of something to go and find afterwards. A position that closes also releases the price it was opened at, so the next trade in that name is placed at the current market and not an older one.</p>
+          <p class="lede">Agreeing to the terms during install was meant to approve the builder fee, and it never did. Nobody was charged and nothing broke, but the approval was simply not there. It now happens while you install: connect your wallet and sign once, on the same screen where you paste your key. Fixed as well: after a trade closed, the next one in that same coin could be placed at the old price instead of the price right now.</p>
     </div>
   </section>
 
