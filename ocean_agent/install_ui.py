@@ -130,14 +130,16 @@ var W=function(){return (window.phantom&&window.phantom.solana)||
  window.solana||window.solflare||window.backpack||null;};
 var fw=document.getElementById("fw"),fa=document.getElementById("fa"),
     fm=document.getElementById("fm"),addr=null;
-// 09-22 boss: do not wait for a click. The moment to ask is when they come
-// back from app.pacifica.fi, where they just woke the wallet for the agent
-// key, so fire on the first return to this tab and fall back to the load if
-// they never left. Everything below still works by hand if this is refused.
+// 09-22 boss: queue ours behind theirs. The wallet lines requests up, so
+// asking the moment they leave for the exchange means our prompt is already
+// waiting when they finish approving the agent key: one, then the next, no
+// trip back to this tab. Returning to the tab is the fallback for anyone who
+// reached the exchange another way.
 var asked=false;
 function auto(){ if(asked||!W()) return; asked=true; fw.click(); }
+var pac=document.getElementById("pacLink");
+if(pac) pac.addEventListener("click", function(){ setTimeout(auto, 600); });
 window.addEventListener("focus", function(){ setTimeout(auto, 300); });
-setTimeout(function(){ if(document.hasFocus()) auto(); }, 15000);
 function say(t,k){fm.textContent=t;fm.className="fmsg"+(k?" "+k:"");}
 async function has(){try{var r=await fetch(API+
  "/account/builder_codes/approvals?account="+addr);var j=await r.json();
@@ -277,7 +279,8 @@ class _H(BaseHTTPRequestHandler):
                 "<a href='https://app.pacifica.fi' target='_blank'>"
                 "app.pacifica.fi</a></div>"
                 "<div class='msg'><b>2.</b> Open "
-                "<a href='https://app.pacifica.fi/apikey' target='_blank'>"
+                "<a href='https://app.pacifica.fi/apikey' target='_blank'"
+                " id='pacLink'>"
                 "app.pacifica.fi/apikey</a> and make a key<br>"
                 "<b>Generate &rarr; copy the key on the left &rarr; Create"
                 "</b><br>Ocean Agent only trades, never withdraws. Revocable any time.</div>"
